@@ -1,67 +1,52 @@
 # fakESB
 
-[简体中文](README.zh-CN.md)
+[![Release](https://github.com/cloudiful/fakesb/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/cloudiful/fakesb/actions/workflows/docker-publish.yml)
+[![Latest Release](https://img.shields.io/github/v/release/cloudiful/fakesb?display_name=tag&sort=semver)](https://github.com/cloudiful/fakesb/releases)
+[![License](https://img.shields.io/github/license/cloudiful/fakesb)](LICENSE)
+[![Rust](https://img.shields.io/badge/Rust-2024-000000?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 
-fakESB is a configurable XML gateway for testing ESB integrations. It parses
-incoming XML requests, routes them to configured targets, or renders response
-templates, and records request and response snapshots in PostgreSQL.
+[English](README.md) | [简体中文](README.zh-CN.md)
+
+A lightweight, configurable XML gateway for ESB integration testing, with
+routing, response mocking, and request inspection.
 
 ## Features
 
-- XML dispatch at `POST /Esbhttp/SmartEBANK`.
-- Target, routing rule, response template, and request log management.
-- Generated OpenAPI document at `/api/openapi.json`.
-- Static Nuxt web console and multi-architecture Docker images.
+- Forward XML requests to configurable target services.
+- Route requests with service and message matching rules.
+- Return configurable XML response templates without calling an upstream.
+- Store request and response snapshots in PostgreSQL.
+- Manage targets, rules, templates, and logs through a static web console.
 
-## Local development
+## Deploy With Docker
 
-Install Rust, PostgreSQL, and Bun. Create a local environment from
-`.env.example`, then run:
-
-```bash
-cd server
-export DATABASE_URL=postgresql://fakesb:change-me@127.0.0.1:5432/fakesb
-cargo run --bin db_init
-SQLX_OFFLINE=true cargo run
-```
-
-When changing migrations or SQL queries, initialize the database before
-regenerating SQLx metadata:
+The Docker image contains the Rust gateway, the static web console, and Nginx.
+Create a local environment file and set `DATABASE_URL` to a PostgreSQL URL
+reachable from the container:
 
 ```bash
-cd server
-export DATABASE_URL=postgresql://fakesb:change-me@127.0.0.1:5432/fakesb
-cargo run --bin db_init
-cargo sqlx prepare --workspace -- --all-targets
-SQLX_OFFLINE=true cargo check --workspace --all-targets
+cp .env.example .env
+docker pull ghcr.io/cloudiful/fakesb:latest
+docker run --rm --name fakesb \
+  --env-file .env \
+  -p 127.0.0.1:8080:80 \
+  ghcr.io/cloudiful/fakesb:latest
 ```
 
-The API listens on `127.0.0.1:3000` by default. To build the web console:
+Open the console at <http://127.0.0.1:8080>. The XML gateway endpoint is
+`POST /Esbhttp/SmartEBANK`. Pending database migrations run at startup.
 
-```bash
-cd web
-bun install --minimum-release-age 604800
-bun run generate
-```
+For PostgreSQL running on the host, use `host.docker.internal` instead of
+`127.0.0.1` in `DATABASE_URL` on Docker Desktop.
 
-The generated files are written to `web/.output/public`.
+The `/api` management endpoints have no authentication layer. Keep the
+published port on a trusted network and treat configured target URLs and XML
+snapshots as potentially sensitive data.
 
-## Docker
-
-The image contains the API and static web console. Provide a PostgreSQL URL
-and keep the published port private:
-
-```bash
-docker build --target runtime -t fakesb .
-docker run --rm -p 127.0.0.1:8080:80 \
-  -e DATABASE_URL=postgresql://fakesb:change-me@host.docker.internal:5432/fakesb \
-  fakesb
-```
-
-The `/api` management endpoints have no authentication layer. Run the service
-only on a trusted network, and review target URLs and stored XML snapshots as
-potentially sensitive operational data.
+GitHub Releases provide backend binaries for Linux x86_64, Linux arm64,
+Windows x64, and macOS arm64. Use the Docker image when the web console is
+required.
 
 ## License
 
-Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE).
+Apache License 2.0. See [LICENSE](LICENSE).

@@ -1,62 +1,48 @@
 # fakESB
 
-[English](README.md)
+[![Release](https://github.com/cloudiful/fakesb/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/cloudiful/fakesb/actions/workflows/docker-publish.yml)
+[![Latest Release](https://img.shields.io/github/v/release/cloudiful/fakesb?display_name=tag&sort=semver)](https://github.com/cloudiful/fakesb/releases)
+[![License](https://img.shields.io/github/license/cloudiful/fakesb)](LICENSE)
+[![Rust](https://img.shields.io/badge/Rust-2024-000000?logo=rust&logoColor=white)](https://www.rust-lang.org/)
 
-fakESB 是一个可配置的 XML 网关，用于测试 ESB 集成。它解析输入 XML
-请求，将请求转发到配置的目标地址，或渲染响应模板，并将请求与响应快照保存到 PostgreSQL。
+[English](README.md) | [简体中文](README.zh-CN.md)
+
+一个轻量、可配置的 XML 网关，用于 ESB 集成测试，支持路由、响应模拟和请求检查。
 
 ## 功能
 
-- `POST /Esbhttp/SmartEBANK` XML 转发接口。
-- 目标地址、路由规则、响应模板和请求日志管理。
-- `/api/openapi.json` 自动生成的 OpenAPI 文档。
-- Nuxt 静态管理界面和多架构 Docker 镜像。
+- 将 XML 请求转发到可配置的目标服务。
+- 按服务标识和报文标识匹配路由规则。
+- 使用 XML 响应模板直接返回模拟结果，无需调用上游服务。
+- 将请求和响应快照保存到 PostgreSQL。
+- 通过静态 Web 管理台管理目标地址、规则、模板和日志。
 
-## 本地开发
+## Docker 部署
 
-安装 Rust、PostgreSQL 和 Bun。根据 `.env.example` 创建本地环境，然后运行：
-
-```bash
-cd server
-export DATABASE_URL=postgresql://fakesb:change-me@127.0.0.1:5432/fakesb
-cargo run --bin db_init
-SQLX_OFFLINE=true cargo run
-```
-
-修改 migration 或 SQL 查询时，应先初始化数据库，再重新生成 SQLx 元数据：
+Docker 镜像包含 Rust 网关、静态 Web 管理台和 Nginx。创建本地环境文件，
+并将 `DATABASE_URL` 设置为容器可以访问的 PostgreSQL 地址：
 
 ```bash
-cd server
-export DATABASE_URL=postgresql://fakesb:change-me@127.0.0.1:5432/fakesb
-cargo run --bin db_init
-cargo sqlx prepare --workspace -- --all-targets
-SQLX_OFFLINE=true cargo check --workspace --all-targets
+cp .env.example .env
+docker pull ghcr.io/cloudiful/fakesb:latest
+docker run --rm --name fakesb \
+  --env-file .env \
+  -p 127.0.0.1:8080:80 \
+  ghcr.io/cloudiful/fakesb:latest
 ```
 
-API 默认监听 `127.0.0.1:3000`。构建前端管理界面：
+打开管理台：<http://127.0.0.1:8080>。XML 网关接口为
+`POST /Esbhttp/SmartEBANK`。服务启动时会自动执行待处理的数据库 migration。
 
-```bash
-cd web
-bun install --minimum-release-age 604800
-bun run generate
-```
+如果 PostgreSQL 运行在宿主机上，请在 Docker Desktop 环境中将
+`DATABASE_URL` 里的 `127.0.0.1` 改为 `host.docker.internal`。
 
-生成文件位于 `web/.output/public`。
+`/api` 管理接口当前没有认证层。请只在可信网络中发布端口，并将配置的目标地址
+和 XML 快照按可能包含敏感数据处理。
 
-## Docker
-
-镜像包含 API 和静态前端。配置 PostgreSQL 地址，并将发布端口限制在可信网络：
-
-```bash
-docker build --target runtime -t fakesb .
-docker run --rm -p 127.0.0.1:8080:80 \
-  -e DATABASE_URL=postgresql://fakesb:change-me@host.docker.internal:5432/fakesb \
-  fakesb
-```
-
-`/api` 管理接口当前没有认证层。服务只能运行在可信网络中；目标地址和保存的 XML
-快照应按可能包含敏感运行数据处理。
+GitHub Releases 提供 Linux x86_64、Linux arm64、Windows x64 和 macOS arm64
+的后端二进制。需要 Web 管理台时，请使用 Docker 镜像。
 
 ## 许可证
 
-本项目采用 Apache License 2.0，详见 [LICENSE](LICENSE)。
+Apache License 2.0，详见 [LICENSE](LICENSE)。
