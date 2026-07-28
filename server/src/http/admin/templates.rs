@@ -20,14 +20,20 @@ pub async fn create(
     state: web::Data<AppState>,
 ) -> HttpResponse {
     let payload = payload.into_inner();
+    let headers = payload
+        .headers
+        .clone()
+        .unwrap_or_else(|| serde_json::json!({}));
     created(
         state
             .services
             .create_template(
                 &payload.name,
-                payload.content_type.as_deref().unwrap_or("application/xml"),
+                payload.content_type.as_deref().unwrap_or("text/plain"),
                 &payload.raw_template,
-                payload.format.as_deref().unwrap_or("xml"),
+                payload.format.as_deref().unwrap_or("text"),
+                payload.status_code.unwrap_or(200),
+                &headers,
                 payload.enabled.unwrap_or(true),
                 payload.note.as_deref(),
             )
@@ -43,15 +49,21 @@ pub async fn update(
     state: web::Data<AppState>,
 ) -> HttpResponse {
     let payload = payload.into_inner();
+    let headers = payload
+        .headers
+        .clone()
+        .unwrap_or_else(|| serde_json::json!({}));
     updated(
         state
             .services
             .update_template(
                 id.into_inner(),
                 &payload.name,
-                payload.content_type.as_deref().unwrap_or("application/xml"),
+                payload.content_type.as_deref().unwrap_or("text/plain"),
                 &payload.raw_template,
-                payload.format.as_deref().unwrap_or("xml"),
+                payload.format.as_deref().unwrap_or("text"),
+                payload.status_code.unwrap_or(200),
+                &headers,
                 payload.enabled.unwrap_or(true),
                 payload.note.as_deref(),
             )

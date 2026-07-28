@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select count(*) over () as \"total!\",\n       id,\n       occurred_at,\n       rule_id,\n       target_id,\n       mode,\n       service_code,\n       message_type,\n       message_code,\n       http_status_code,\n       ret_code,\n       ret_msg,\n       latency_ms,\n       error_message\nfrom request_logs\nwhere ($1::text is null or service_code = $1)\n  and ($2::text is null or message_type = $2)\n  and ($3::text is null or message_code = $3)\n  and ($4::text is null or mode = $4)\n  and ($5::text is null or ret_code = $5)\n  and ($6::timestamptz is null or occurred_at >= $6)\n  and ($7::timestamptz is null or occurred_at <= $7)\norder by occurred_at desc, id desc\nlimit $8 offset $9\n",
+  "query": "select count(*) over () as \"total!\",\n       id,\n       occurred_at,\n       rule_id,\n       target_id,\n       action,\n       method,\n       path,\n       query_string,\n       content_type,\n       body_format,\n       request_headers,\n       response_headers,\n       http_status_code,\n       latency_ms,\n       error_message\nfrom request_logs\nwhere ($1::text is null or method = $1)\n  and ($2::text is null or path = $2)\n  and ($3::text is null or action = $3)\n  and ($4::integer is null or http_status_code = $4)\n  and ($5::timestamptz is null or occurred_at >= $5)\n  and ($6::timestamptz is null or occurred_at <= $6)\norder by occurred_at desc, id desc\nlimit $7 offset $8\n",
   "describe": {
     "columns": [
       {
@@ -55,52 +55,96 @@
       },
       {
         "ordinal": 5,
-        "name": "mode",
+        "name": "action",
         "type_info": "Text",
         "origin": {
           "Table": {
             "table": "request_logs",
-            "name": "mode"
+            "name": "action"
           }
         }
       },
       {
         "ordinal": 6,
-        "name": "service_code",
+        "name": "method",
         "type_info": "Text",
         "origin": {
           "Table": {
             "table": "request_logs",
-            "name": "service_code"
+            "name": "method"
           }
         }
       },
       {
         "ordinal": 7,
-        "name": "message_type",
+        "name": "path",
         "type_info": "Text",
         "origin": {
           "Table": {
             "table": "request_logs",
-            "name": "message_type"
+            "name": "path"
           }
         }
       },
       {
         "ordinal": 8,
-        "name": "message_code",
+        "name": "query_string",
         "type_info": "Text",
         "origin": {
           "Table": {
             "table": "request_logs",
-            "name": "message_code"
+            "name": "query_string"
           }
         }
       },
       {
         "ordinal": 9,
-        "name": "http_status_code",
+        "name": "content_type",
         "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "content_type"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "body_format",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "body_format"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "request_headers",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "request_headers"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "response_headers",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "response_headers"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "http_status_code",
+        "type_info": "Int4",
         "origin": {
           "Table": {
             "table": "request_logs",
@@ -109,29 +153,7 @@
         }
       },
       {
-        "ordinal": 10,
-        "name": "ret_code",
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "request_logs",
-            "name": "ret_code"
-          }
-        }
-      },
-      {
-        "ordinal": 11,
-        "name": "ret_msg",
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "request_logs",
-            "name": "ret_msg"
-          }
-        }
-      },
-      {
-        "ordinal": 12,
+        "ordinal": 14,
         "name": "latency_ms",
         "type_info": "Int8",
         "origin": {
@@ -142,7 +164,7 @@
         }
       },
       {
-        "ordinal": 13,
+        "ordinal": 15,
         "name": "error_message",
         "type_info": "Text",
         "origin": {
@@ -158,8 +180,7 @@
         "Text",
         "Text",
         "Text",
-        "Text",
-        "Text",
+        "Int4",
         "Timestamptz",
         "Timestamptz",
         "Int8",
@@ -175,13 +196,15 @@
       true,
       false,
       false,
+      true,
+      true,
       false,
-      true,
-      true,
+      false,
+      false,
       true,
       true,
       true
     ]
   },
-  "hash": "8cf8cdcf8feb8b26aab970cc4f9b242fa2757c5b5fd9166cccff3e6bee2e5d11"
+  "hash": "4e6c64011efc20fa8cfb821d35b4e5f679ac4f422ec2c5b29f8f8b2eddde1af1"
 }

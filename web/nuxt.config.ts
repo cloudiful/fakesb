@@ -30,8 +30,8 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'fakESB',
-      meta: [{ name: 'description', content: 'Configurable ESB test gateway' }],
+      title: 'HTTP Mocks',
+      meta: [{ name: 'description', content: 'Configurable HTTP mock and proxy service' }],
     },
   },
 })

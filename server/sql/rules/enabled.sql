@@ -1,9 +1,7 @@
 select id,
-       service_code,
-       message_type,
-       message_code,
+       matcher,
        target_id,
-       mode,
+       action,
        response_template_id,
        priority,
        enabled,
@@ -12,8 +10,4 @@ select id,
        updated_at
 from rules
 where enabled = true
-  and service_code = $1
-  and message_type = $2
-  and message_code = $3
 order by priority desc, id asc
-limit 1

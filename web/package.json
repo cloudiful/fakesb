@@ -13,7 +13,7 @@
     "format": "prettier --write .",
     "test:unit": "vitest run --passWithNoTests",
     "api:generate": "bun run api:export && bunx openapi-typescript openapi.json -o types/api.generated.ts",
-    "api:export": "cd ../server && cargo run --quiet -- export-openapi > ../web/openapi.json"
+    "api:export": "cd ../server && SQLX_OFFLINE=true cargo run --quiet --bin fakESB -- export-openapi > ../web/openapi.json"
   },
   "dependencies": {
     "@iconify-json/mdi": "^1.2.3",

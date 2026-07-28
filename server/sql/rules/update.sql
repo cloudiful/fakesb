@@ -1,13 +1,11 @@
 update rules
-set service_code = $2,
-    message_type = $3,
-    message_code = $4,
-    target_id = $5,
-    mode = $6,
-    response_template_id = $7,
-    priority = $8,
-    enabled = $9,
-    note = $10,
+set matcher = $2,
+    target_id = $3,
+    action = $4,
+    response_template_id = $5,
+    priority = $6,
+    enabled = $7,
+    note = $8,
     updated_at = now()
 where id = $1
 returning id

@@ -143,14 +143,11 @@ mod tests {
     use serde_json::json;
 
     #[test]
-    fn converts_esb_headers_and_body() {
-        let result = to_json(
-            r#"<request><sys-header><SYS_HEAD><SERVICE_CODE>SVC</SERVICE_CODE><MESSAGE_TYPE>TYPE</MESSAGE_TYPE><MESSAGE_CODE>CODE</MESSAGE_CODE></SYS_HEAD></sys-header><body><FIELD>value</FIELD></body></request>"#,
-        )
-        .unwrap();
+    fn converts_nested_request_body() {
+        let result = to_json(r#"<request><metadata><trace>abc</trace></metadata><body><field>value</field></body></request>"#).unwrap();
 
-        assert_eq!(result["sys-header"]["SYS_HEAD"]["SERVICE_CODE"], "SVC");
-        assert_eq!(result["body"]["FIELD"], "value");
+        assert_eq!(result["metadata"]["trace"], "abc");
+        assert_eq!(result["body"]["field"], "value");
     }
 
     #[test]

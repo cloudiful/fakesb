@@ -1,8 +1,8 @@
-# fakESB web
+# Web console
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-The web console is a static Nuxt application using Nuxt UI. It provides pages for target addresses, routing rules, response templates, request logs, and log details. The default locale is Simplified Chinese; English is available from the header.
+The web console is a static Nuxt application using Nuxt UI. It provides pages for targets, generic match rules, response templates, request logs, and log details. The default locale is Simplified Chinese; English is available from the header.
 
 The browser uses the generated OpenAPI types and `openapi-fetch` client. Production requests use the same-origin `/api` routes and do not access PostgreSQL during static generation.
 

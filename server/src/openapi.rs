@@ -4,7 +4,6 @@ use utoipa::OpenApi;
 #[openapi(
     paths(
         crate::http::healthz,
-        crate::http::dispatch_esb,
         crate::http::openapi_json,
         crate::http::admin::targets::list,
         crate::http::admin::targets::create,
@@ -21,7 +20,10 @@ use utoipa::OpenApi;
     components(schemas(
         crate::domain::Target,
         crate::domain::Rule,
-        crate::domain::RuleMode,
+        crate::domain::RuleAction,
+        crate::domain::RuleMatcher,
+        crate::domain::StringMatcher,
+        crate::domain::BodyMatcher,
         crate::domain::ResponseTemplate,
         crate::domain::RequestLog,
         crate::domain::MessageSnapshot,

@@ -6,8 +6,12 @@ mod parser;
 mod passthrough;
 mod response;
 
+#[path = "../matching.rs"]
+pub(crate) mod matching;
+
 pub(crate) use admin::{LogQuery, RuleInput};
 pub(crate) use dispatch::dispatch;
+pub(crate) use parser::parse_request;
 
 use reqwest::Client;
 use sqlx::PgPool;
@@ -66,6 +70,8 @@ pub enum ServiceError {
     Parse(String),
     #[error("validation error: {0}")]
     Validation(String),
+    #[error("no matching rule")]
+    NoMatch,
 }
 
 impl From<sqlx::Error> for ServiceError {

@@ -1,10 +1,16 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id,\n       service_code,\n       message_type,\n       message_code,\n       target_id,\n       mode,\n       response_template_id,\n       priority,\n       enabled,\n       note,\n       created_at,\n       updated_at\nfrom rules\nwhere enabled = true\n  and service_code = $1\n  and message_type = $2\n  and message_code = $3\norder by priority desc, id asc\nlimit 1\n",
+  "query": "select count(*) over () as \"total!\",\n       id,\n       matcher,\n       target_id,\n       action,\n       response_template_id,\n       priority,\n       enabled,\n       note,\n       created_at,\n       updated_at\nfrom rules\norder by priority desc, id asc\nlimit $1 offset $2\n",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
+        "name": "total!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
         "name": "id",
         "type_info": "Int8",
         "origin": {
@@ -15,40 +21,18 @@
         }
       },
       {
-        "ordinal": 1,
-        "name": "service_code",
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "rules",
-            "name": "service_code"
-          }
-        }
-      },
-      {
         "ordinal": 2,
-        "name": "message_type",
-        "type_info": "Text",
+        "name": "matcher",
+        "type_info": "Jsonb",
         "origin": {
           "Table": {
             "table": "rules",
-            "name": "message_type"
+            "name": "matcher"
           }
         }
       },
       {
         "ordinal": 3,
-        "name": "message_code",
-        "type_info": "Text",
-        "origin": {
-          "Table": {
-            "table": "rules",
-            "name": "message_code"
-          }
-        }
-      },
-      {
-        "ordinal": 4,
         "name": "target_id",
         "type_info": "Int8",
         "origin": {
@@ -59,18 +43,18 @@
         }
       },
       {
-        "ordinal": 5,
-        "name": "mode",
+        "ordinal": 4,
+        "name": "action",
         "type_info": "Text",
         "origin": {
           "Table": {
             "table": "rules",
-            "name": "mode"
+            "name": "action"
           }
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 5,
         "name": "response_template_id",
         "type_info": "Int8",
         "origin": {
@@ -81,7 +65,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 6,
         "name": "priority",
         "type_info": "Int4",
         "origin": {
@@ -92,7 +76,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 7,
         "name": "enabled",
         "type_info": "Bool",
         "origin": {
@@ -103,7 +87,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 8,
         "name": "note",
         "type_info": "Text",
         "origin": {
@@ -114,7 +98,7 @@
         }
       },
       {
-        "ordinal": 10,
+        "ordinal": 9,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -125,7 +109,7 @@
         }
       },
       {
-        "ordinal": 11,
+        "ordinal": 10,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -138,14 +122,12 @@
     ],
     "parameters": {
       "Left": [
-        "Text",
-        "Text",
-        "Text"
+        "Int8",
+        "Int8"
       ]
     },
     "nullable": [
-      false,
-      false,
+      null,
       false,
       false,
       true,
@@ -158,5 +140,5 @@
       false
     ]
   },
-  "hash": "93c61317831dce060bbde0c1951646a837aaa187ff3070fe96a34fcff3aefc2f"
+  "hash": "b7675f3155d1cc1067b32c2fe1612a5b1693c64d1aa8cdf99663d9f89f9f9176"
 }

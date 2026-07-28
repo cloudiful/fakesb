@@ -1,181 +1,668 @@
-/* Generated from the Rust utoipa document. Refresh with `bun run api:generate`. */
-export interface components {
-  schemas: {
-    IdResponse: { id: number }
-    LogDetail: components['schemas']['RequestLog'] & {
-      snapshots: components['schemas']['MessageSnapshot'][]
-    }
-    LogPage: {
-      items: components['schemas']['RequestLog'][]
-      total: number
-    }
-    MessageSnapshot: {
-      id: number
-      kind: 'request' | 'response'
-      raw_body: string
-      normalized_json: unknown
-    }
-    RequestLog: {
-      id: number
-      occurred_at: string
-      rule_id?: number | null
-      target_id?: number | null
-      mode?: components['schemas']['RuleMode'] | null
-      service_code: string
-      message_type: string
-      message_code: string
-      http_status_code?: string | null
-      ret_code?: string | null
-      ret_msg?: string | null
-      latency_ms?: number | null
-      error_message?: string | null
-    }
-    ResponseTemplate: {
-      id: number
-      name: string
-      content_type: string
-      raw_template: string
-      format: string
-      enabled: boolean
-      note?: string | null
-      created_at: string
-      updated_at: string
-    }
-    Rule: {
-      id: number
-      service_code: string
-      message_type: string
-      message_code: string
-      target_id?: number | null
-      mode: components['schemas']['RuleMode']
-      response_template_id?: number | null
-      priority: number
-      enabled: boolean
-      note?: string | null
-      created_at: string
-      updated_at: string
-    }
-    RuleMode: 'passthrough' | 'mock'
-    RulePage: {
-      items: components['schemas']['Rule'][]
-      total: number
-    }
-    RulePayload: {
-      service_code: string
-      message_type: string
-      message_code: string
-      target_id?: number | null
-      mode: components['schemas']['RuleMode']
-      response_template_id?: number | null
-      priority?: number
-      enabled?: boolean
-      note?: string | null
-    }
-    Target: {
-      id: number
-      name: string
-      base_url: string
-      enabled: boolean
-      timeout_ms: number
-      note?: string | null
-      created_at: string
-      updated_at: string
-    }
-    TargetPage: {
-      items: components['schemas']['Target'][]
-      total: number
-    }
-    TargetPayload: {
-      name: string
-      base_url: string
-      enabled?: boolean
-      timeout_ms?: number
-      note?: string | null
-    }
-    TemplatePage: {
-      items: components['schemas']['ResponseTemplate'][]
-      total: number
-    }
-    TemplatePayload: {
-      name: string
-      content_type?: string
-      raw_template: string
-      format?: string
-      enabled?: boolean
-      note?: string | null
-    }
-  }
-}
-
-export interface operations {
-  listTargets: {
-    parameters?: { query?: { offset?: number; limit?: number } }
-    responses: { 200: { content: { 'application/json': components['schemas']['TargetPage'] } } }
-  }
-  createTarget: {
-    requestBody: { content: { 'application/json': components['schemas']['TargetPayload'] } }
-    responses: { 201: { content: { 'application/json': components['schemas']['IdResponse'] } } }
-  }
-  updateTarget: {
-    parameters: { path: { id: number } }
-    requestBody: { content: { 'application/json': components['schemas']['TargetPayload'] } }
-    responses: { 200: { content: { 'application/json': components['schemas']['IdResponse'] } } }
-  }
-  listRules: {
-    parameters?: { query?: { offset?: number; limit?: number } }
-    responses: { 200: { content: { 'application/json': components['schemas']['RulePage'] } } }
-  }
-  createRule: {
-    requestBody: { content: { 'application/json': components['schemas']['RulePayload'] } }
-    responses: { 201: { content: { 'application/json': components['schemas']['IdResponse'] } } }
-  }
-  updateRule: {
-    parameters: { path: { id: number } }
-    requestBody: { content: { 'application/json': components['schemas']['RulePayload'] } }
-    responses: { 200: { content: { 'application/json': components['schemas']['IdResponse'] } } }
-  }
-  listTemplates: {
-    parameters?: { query?: { offset?: number; limit?: number } }
-    responses: { 200: { content: { 'application/json': components['schemas']['TemplatePage'] } } }
-  }
-  createTemplate: {
-    requestBody: { content: { 'application/json': components['schemas']['TemplatePayload'] } }
-    responses: { 201: { content: { 'application/json': components['schemas']['IdResponse'] } } }
-  }
-  updateTemplate: {
-    parameters: { path: { id: number } }
-    requestBody: { content: { 'application/json': components['schemas']['TemplatePayload'] } }
-    responses: { 200: { content: { 'application/json': components['schemas']['IdResponse'] } } }
-  }
-  listLogs: {
-    parameters?: {
-      query?: {
-        offset?: number
-        limit?: number
-        service_code?: string
-        message_type?: string
-        message_code?: string
-        mode?: components['schemas']['RuleMode']
-        ret_code?: string
-        start_time?: string
-        end_time?: string
-      }
-    }
-    responses: { 200: { content: { 'application/json': components['schemas']['LogPage'] } } }
-  }
-  getLog: {
-    parameters: { path: { id: number } }
-    responses: { 200: { content: { 'application/json': components['schemas']['LogDetail'] } } }
-  }
-}
+/**
+ * This file was auto-generated by openapi-typescript.
+ * Do not make direct changes to the file.
+ */
 
 export interface paths {
-  '/api/targets': { get: operations['listTargets']; post: operations['createTarget'] }
-  '/api/targets/{id}': { put: operations['updateTarget'] }
-  '/api/rules': { get: operations['listRules']; post: operations['createRule'] }
-  '/api/rules/{id}': { put: operations['updateRule'] }
-  '/api/templates': { get: operations['listTemplates']; post: operations['createTemplate'] }
-  '/api/templates/{id}': { put: operations['updateTemplate'] }
-  '/api/logs': { get: operations['listLogs'] }
-  '/api/logs/{id}': { get: operations['getLog'] }
+    "/api/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listLogs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/logs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getLog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/openapi.json": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getOpenApi"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listRules"];
+        put?: never;
+        post: operations["createRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/rules/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateRule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listTargets"];
+        put?: never;
+        post: operations["createTarget"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/targets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateTarget"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listTemplates"];
+        put?: never;
+        post: operations["createTemplate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/templates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["updateTemplate"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/healthz": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["healthz"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
+export type webhooks = Record<string, never>;
+export interface components {
+    schemas: {
+        /** @enum {string} */
+        BodyFormat: "json" | "xml" | "text";
+        BodyMatcher: {
+            contains?: string | null;
+            equal_to?: string | null;
+            fields?: {
+                [key: string]: components["schemas"]["StringMatcher"];
+            };
+            format: components["schemas"]["BodyFormat"];
+            json_equal_to?: unknown;
+            matches?: string | null;
+        };
+        IdResponse: {
+            /** Format: int64 */
+            id: number;
+        };
+        LogDetail: components["schemas"]["RequestLog"] & {
+            snapshots: components["schemas"]["MessageSnapshot"][];
+        };
+        LogPage: {
+            items: components["schemas"]["RequestLog"][];
+            /** Format: int64 */
+            total: number;
+        };
+        MessageSnapshot: {
+            /** Format: int64 */
+            id: number;
+            kind: components["schemas"]["SnapshotKind"];
+            normalized_json: unknown;
+            raw_body: string;
+        };
+        RequestLog: {
+            action?: null | components["schemas"]["RuleAction"];
+            body_format: components["schemas"]["BodyFormat"];
+            content_type?: string | null;
+            error_message?: string | null;
+            /** Format: int32 */
+            http_status_code?: number | null;
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            latency_ms?: number | null;
+            method: string;
+            /** Format: date-time */
+            occurred_at: string;
+            path: string;
+            query_string?: string | null;
+            request_headers: unknown;
+            response_headers: unknown;
+            /** Format: int64 */
+            rule_id?: number | null;
+            /** Format: int64 */
+            target_id?: number | null;
+        };
+        ResponseTemplate: {
+            content_type: string;
+            /** Format: date-time */
+            created_at: string;
+            enabled: boolean;
+            format: string;
+            headers: unknown;
+            /** Format: int64 */
+            id: number;
+            name: string;
+            note?: string | null;
+            raw_template: string;
+            /** Format: int32 */
+            status_code: number;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        Rule: {
+            action: components["schemas"]["RuleAction"];
+            /** Format: date-time */
+            created_at: string;
+            enabled: boolean;
+            /** Format: int64 */
+            id: number;
+            matcher: components["schemas"]["RuleMatcher"];
+            note?: string | null;
+            /** Format: int32 */
+            priority: number;
+            /** Format: int64 */
+            response_template_id?: number | null;
+            /** Format: int64 */
+            target_id?: number | null;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /** @enum {string} */
+        RuleAction: "proxy" | "static";
+        RuleMatcher: {
+            body?: null | components["schemas"]["BodyMatcher"];
+            headers?: {
+                [key: string]: components["schemas"]["StringMatcher"];
+            };
+            method?: string | null;
+            path?: string | null;
+            path_pattern?: string | null;
+            query?: {
+                [key: string]: components["schemas"]["StringMatcher"];
+            };
+        };
+        RulePage: {
+            items: components["schemas"]["Rule"][];
+            /** Format: int64 */
+            total: number;
+        };
+        RulePayload: {
+            action: components["schemas"]["RuleAction"];
+            enabled?: boolean | null;
+            matcher: components["schemas"]["RuleMatcher"];
+            note?: string | null;
+            /** Format: int32 */
+            priority?: number | null;
+            /** Format: int64 */
+            response_template_id?: number | null;
+            /** Format: int64 */
+            target_id?: number | null;
+        };
+        /** @enum {string} */
+        SnapshotKind: "request" | "response";
+        StringMatcher: {
+            contains?: string | null;
+            equal_to?: string | null;
+            matches?: string | null;
+        };
+        Target: {
+            base_url: string;
+            /** Format: date-time */
+            created_at: string;
+            enabled: boolean;
+            /** Format: int64 */
+            id: number;
+            name: string;
+            note?: string | null;
+            /** Format: int32 */
+            timeout_ms: number;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        TargetPage: {
+            items: components["schemas"]["Target"][];
+            /** Format: int64 */
+            total: number;
+        };
+        TargetPayload: {
+            base_url: string;
+            enabled?: boolean | null;
+            name: string;
+            note?: string | null;
+            /** Format: int32 */
+            timeout_ms?: number | null;
+        };
+        TemplatePage: {
+            items: components["schemas"]["ResponseTemplate"][];
+            /** Format: int64 */
+            total: number;
+        };
+        TemplatePayload: {
+            content_type?: string | null;
+            enabled?: boolean | null;
+            format?: string | null;
+            headers?: unknown;
+            name: string;
+            note?: string | null;
+            raw_template: string;
+            /** Format: int32 */
+            status_code?: number | null;
+        };
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
+}
+export type $defs = Record<string, never>;
+export interface operations {
+    listLogs: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+                method?: string;
+                path?: string;
+                action?: components["schemas"]["RuleAction"];
+                status_code?: number;
+                start_time?: string;
+                end_time?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogPage"];
+                };
+            };
+        };
+    };
+    getLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogDetail"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getOpenApi: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listRules: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePage"];
+                };
+            };
+        };
+    };
+    createRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RulePayload"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdResponse"];
+                };
+            };
+        };
+    };
+    updateRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RulePayload"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdResponse"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listTargets: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TargetPage"];
+                };
+            };
+        };
+    };
+    createTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TargetPayload"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdResponse"];
+                };
+            };
+        };
+    };
+    updateTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TargetPayload"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdResponse"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listTemplates: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplatePage"];
+                };
+            };
+        };
+    };
+    createTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplatePayload"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdResponse"];
+                };
+            };
+        };
+    };
+    updateTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplatePayload"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdResponse"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    healthz: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Service is healthy */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
 }

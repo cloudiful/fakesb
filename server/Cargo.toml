@@ -25,4 +25,5 @@ thiserror = "2.0.19"
 tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread", "time"] }
 utoipa = { version = "5.5.0", features = ["chrono"] }
 uuid = { version = "1.24.0", features = ["v4", "serde"] }
+url = "2.5.7"
 xml = { path = "crates/xml" }

@@ -9,6 +9,8 @@ struct TemplateRow {
     content_type: String,
     raw_template: String,
     format: String,
+    status_code: i32,
+    headers: serde_json::Value,
     enabled: bool,
     note: Option<String>,
     created_at: chrono::DateTime<chrono::Utc>,
@@ -23,6 +25,8 @@ impl From<TemplateRow> for ResponseTemplate {
             content_type: row.content_type,
             raw_template: row.raw_template,
             format: row.format,
+            status_code: row.status_code as u16,
+            headers: row.headers,
             enabled: row.enabled,
             note: row.note,
             created_at: row.created_at,
@@ -39,6 +43,8 @@ struct TemplateListRow {
     content_type: String,
     raw_template: String,
     format: String,
+    status_code: i32,
+    headers: serde_json::Value,
     enabled: bool,
     note: Option<String>,
     created_at: chrono::DateTime<chrono::Utc>,
@@ -53,6 +59,8 @@ impl From<TemplateListRow> for ResponseTemplate {
             content_type: row.content_type,
             raw_template: row.raw_template,
             format: row.format,
+            status_code: row.status_code,
+            headers: row.headers,
             enabled: row.enabled,
             note: row.note,
             created_at: row.created_at,
@@ -74,7 +82,6 @@ pub async fn list(
     )
     .fetch_all(pool)
     .await?;
-
     let total = rows.first().map(|row| row.total).unwrap_or(0);
     Ok(Page {
         items: rows.into_iter().map(Into::into).collect(),
@@ -95,6 +102,8 @@ pub async fn insert(
     content_type: &str,
     raw_template: &str,
     format: &str,
+    status_code: u16,
+    headers: &serde_json::Value,
     enabled: bool,
     note: Option<&str>,
 ) -> Result<i64, sqlx::Error> {
@@ -104,6 +113,8 @@ pub async fn insert(
         content_type,
         raw_template,
         format,
+        status_code as i32,
+        headers,
         enabled,
         note
     )
@@ -119,6 +130,8 @@ pub async fn update(
     content_type: &str,
     raw_template: &str,
     format: &str,
+    status_code: u16,
+    headers: &serde_json::Value,
     enabled: bool,
     note: Option<&str>,
 ) -> Result<Option<i64>, sqlx::Error> {
@@ -129,6 +142,8 @@ pub async fn update(
         content_type,
         raw_template,
         format,
+        status_code as i32,
+        headers,
         enabled,
         note
     )

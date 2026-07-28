@@ -1,40 +1,31 @@
 use sqlx::{FromRow, PgPool};
 
-use crate::domain::{Page, PaginationParams, Rule, RuleMode};
+use crate::domain::{Page, PaginationParams, Rule, RuleAction, RuleMatcher};
 
 #[derive(Debug, FromRow)]
-pub struct RuleRow {
-    pub id: i64,
-    pub service_code: String,
-    pub message_type: String,
-    pub message_code: String,
-    pub target_id: Option<i64>,
-    pub mode: String,
-    pub response_template_id: Option<i64>,
-    pub priority: i32,
-    pub enabled: bool,
-    pub note: Option<String>,
-    pub created_at: chrono::DateTime<chrono::Utc>,
-    pub updated_at: chrono::DateTime<chrono::Utc>,
+struct RuleRow {
+    id: i64,
+    matcher: serde_json::Value,
+    target_id: Option<i64>,
+    action: String,
+    response_template_id: Option<i64>,
+    priority: i32,
+    enabled: bool,
+    note: Option<String>,
+    created_at: chrono::DateTime<chrono::Utc>,
+    updated_at: chrono::DateTime<chrono::Utc>,
 }
 
 impl TryFrom<RuleRow> for Rule {
     type Error = String;
 
     fn try_from(row: RuleRow) -> Result<Self, Self::Error> {
-        let mode = match row.mode.as_str() {
-            "passthrough" => RuleMode::Passthrough,
-            "mock" => RuleMode::Mock,
-            value => return Err(format!("unsupported rule mode: {value}")),
-        };
-
         Ok(Self {
             id: row.id,
-            service_code: row.service_code,
-            message_type: row.message_type,
-            message_code: row.message_code,
+            matcher: serde_json::from_value::<RuleMatcher>(row.matcher)
+                .map_err(|error| format!("invalid stored matcher: {error}"))?,
             target_id: row.target_id,
-            mode,
+            action: parse_action(&row.action)?,
             response_template_id: row.response_template_id,
             priority: row.priority,
             enabled: row.enabled,
@@ -49,11 +40,9 @@ impl TryFrom<RuleRow> for Rule {
 struct RuleListRow {
     total: i64,
     id: i64,
-    service_code: String,
-    message_type: String,
-    message_code: String,
+    matcher: serde_json::Value,
     target_id: Option<i64>,
-    mode: String,
+    action: String,
     response_template_id: Option<i64>,
     priority: i32,
     enabled: bool,
@@ -68,11 +57,9 @@ impl TryFrom<RuleListRow> for Rule {
     fn try_from(row: RuleListRow) -> Result<Self, Self::Error> {
         RuleRow {
             id: row.id,
-            service_code: row.service_code,
-            message_type: row.message_type,
-            message_code: row.message_code,
+            matcher: row.matcher,
             target_id: row.target_id,
-            mode: row.mode,
+            action: row.action,
             response_template_id: row.response_template_id,
             priority: row.priority,
             enabled: row.enabled,
@@ -94,51 +81,37 @@ pub async fn list(pool: &PgPool, page: PaginationParams) -> Result<Page<Rule>, s
         .into_iter()
         .map(TryInto::try_into)
         .collect::<Result<Vec<_>, String>>()
-        .map_err(|err| sqlx::Error::Protocol(err.into()))?;
-
+        .map_err(|error| sqlx::Error::Protocol(error.into()))?;
     Ok(Page { items, total })
 }
 
-pub async fn find_match(
-    pool: &PgPool,
-    service_code: &str,
-    message_type: &str,
-    message_code: &str,
-) -> Result<Option<Rule>, sqlx::Error> {
-    let row = sqlx::query_file_as!(
-        RuleRow,
-        "sql/rules/find_match.sql",
-        service_code,
-        message_type,
-        message_code
-    )
-    .fetch_optional(pool)
-    .await?;
-
-    row.map(TryInto::try_into)
-        .transpose()
-        .map_err(|err: String| sqlx::Error::Protocol(err.into()))
+pub async fn list_enabled(pool: &PgPool) -> Result<Vec<Rule>, sqlx::Error> {
+    let rows = sqlx::query_file_as!(RuleRow, "sql/rules/enabled.sql")
+        .fetch_all(pool)
+        .await?;
+    rows.into_iter()
+        .map(TryInto::try_into)
+        .collect::<Result<Vec<_>, String>>()
+        .map_err(|error| sqlx::Error::Protocol(error.into()))
 }
 
 pub async fn insert(
     pool: &PgPool,
-    service_code: &str,
-    message_type: &str,
-    message_code: &str,
+    matcher: &RuleMatcher,
     target_id: Option<i64>,
-    mode: &str,
+    action: RuleAction,
     response_template_id: Option<i64>,
     priority: i32,
     enabled: bool,
     note: Option<&str>,
 ) -> Result<i64, sqlx::Error> {
+    let matcher = serde_json::to_value(matcher)
+        .map_err(|error| sqlx::Error::Protocol(error.to_string().into()))?;
     Ok(sqlx::query_file!(
         "sql/rules/insert.sql",
-        service_code,
-        message_type,
-        message_code,
+        matcher,
         target_id,
-        mode,
+        action.as_str(),
         response_template_id,
         priority,
         enabled,
@@ -152,24 +125,22 @@ pub async fn insert(
 pub async fn update(
     pool: &PgPool,
     id: i64,
-    service_code: &str,
-    message_type: &str,
-    message_code: &str,
+    matcher: &RuleMatcher,
     target_id: Option<i64>,
-    mode: &str,
+    action: RuleAction,
     response_template_id: Option<i64>,
     priority: i32,
     enabled: bool,
     note: Option<&str>,
 ) -> Result<Option<i64>, sqlx::Error> {
+    let matcher = serde_json::to_value(matcher)
+        .map_err(|error| sqlx::Error::Protocol(error.to_string().into()))?;
     Ok(sqlx::query_file!(
         "sql/rules/update.sql",
         id,
-        service_code,
-        message_type,
-        message_code,
+        matcher,
         target_id,
-        mode,
+        action.as_str(),
         response_template_id,
         priority,
         enabled,
@@ -178,4 +149,12 @@ pub async fn update(
     .fetch_optional(pool)
     .await?
     .map(|row| row.id))
+}
+
+fn parse_action(value: &str) -> Result<RuleAction, String> {
+    match value {
+        "proxy" => Ok(RuleAction::Proxy),
+        "static" => Ok(RuleAction::Static),
+        other => Err(format!("unsupported rule action: {other}")),
+    }
 }

@@ -2,42 +2,30 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-fakESB is an Actix Web gateway for testing ESB XML integrations. It parses the incoming `SmartEBANK` message, selects an enabled rule by service and message identifiers, then either forwards the XML to a configured target or renders an enabled response template.
+Actix Web backend for configurable HTTP mocking and proxying. It supports
+JSON, XML, and text bodies, arbitrary request paths, response templates, and
+PostgreSQL request logs.
 
-The server exposes:
-
-- `POST /Esbhttp/SmartEBANK` for XML dispatch;
-- `GET /healthz` for health checks;
-- `GET/POST/PUT /api/targets` for target configuration;
-- `GET/POST/PUT /api/rules` for priority-ordered routing rules;
-- `GET/POST/PUT /api/templates` for XML response templates;
-- `GET /api/logs` and `GET /api/logs/{id}` for request logs and snapshots;
-- `GET /api/openapi.json` for the generated API contract.
-
-## Configuration
-
-The process reads environment variables using the `FAKESB_` prefix. `DATABASE_URL` is also accepted as a local development fallback. See the repository [`.env.example`](../.env.example) for non-secret defaults.
-
-The application uses the fresh schema in `server/migrations/0001_init.sql`: `targets`, `rules`, `response_templates`, `request_logs`, and `message_snapshots`. It never drops legacy tables. Create and switch to a new PostgreSQL database explicitly before deployment; rotate any credentials that were previously exposed in local configuration.
+The server exposes `/healthz`, `/api/*` management endpoints, and a fallback
+handler for user-configured mock or proxy rules.
 
 ## Run
 
 ```bash
 export DATABASE_URL=postgresql://fakesb:change-me@127.0.0.1:5432/fakesb
 cargo run --bin db_init
-cargo run
+cargo run --bin fakESB
 ```
 
-The dedicated `db_init` binary reads `DATABASE_URL` and applies all pending
-migrations. The application also applies pending migrations during startup.
+The server listens on `127.0.0.1:3000`. It reads `FAKESB_` environment
+variables and applies pending migrations on startup. The management API has no
+authentication layer, so keep it on a trusted network.
 
-When migrations or SQL queries change, regenerate SQLx metadata only after the
-database has been migrated:
+When SQL or migrations change, run `db_init` first and then regenerate SQLx
+metadata:
 
 ```bash
 cargo run --bin db_init
 cargo sqlx prepare --workspace -- --all-targets
 SQLX_OFFLINE=true cargo check --workspace --all-targets
 ```
-
-The server listens on `127.0.0.1:3000` by default. The root Dockerfile builds the release image together with the static Nuxt frontend.

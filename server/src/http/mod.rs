@@ -1,11 +1,11 @@
 pub mod admin;
-pub mod json;
 
 mod error;
 pub(crate) mod types;
 
 use actix_web::http::StatusCode;
-use actix_web::{HttpResponse, Responder, get, post, web};
+use actix_web::http::header::{ACCEPT, CONTENT_TYPE, HeaderName, HeaderValue};
+use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use utoipa::OpenApi;
 
 use crate::app::AppState;
@@ -13,7 +13,6 @@ use crate::service::{self, ServiceError};
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(healthz)
-        .service(dispatch_esb)
         .service(openapi_json)
         .service(admin::targets::list)
         .service(admin::targets::create)
@@ -25,7 +24,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .service(admin::templates::create)
         .service(admin::templates::update)
         .service(admin::logs::list)
-        .service(admin::logs::detail);
+        .service(admin::logs::detail)
+        .default_service(web::route().to(dispatch));
 }
 
 #[utoipa::path(
@@ -34,32 +34,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     path = "/healthz",
     responses((status = 200, description = "Service is healthy"))
 )]
-#[get("/healthz")]
+#[actix_web::get("/healthz")]
 pub async fn healthz() -> impl Responder {
     HttpResponse::Ok().body("ok")
-}
-
-#[utoipa::path(
-    post,
-    operation_id = "dispatchEsb",
-    path = "/Esbhttp/SmartEBANK",
-    request_body(content = String, content_type = "application/xml"),
-    responses((status = 200, description = "ESB XML response", content_type = "application/xml"))
-)]
-#[post("/Esbhttp/SmartEBANK")]
-pub async fn dispatch_esb(body: web::Bytes, state: web::Data<AppState>) -> impl Responder {
-    let body = match String::from_utf8(body.to_vec()) {
-        Ok(body) => body,
-        Err(error) => return xml_error(ServiceError::Parse(error.to_string())),
-    };
-    match service::dispatch(&state.services, &body).await {
-        Ok(response) => HttpResponse::build(
-            StatusCode::from_u16(response.status_code).unwrap_or(StatusCode::OK),
-        )
-        .content_type(response.content_type)
-        .body(response.raw_body),
-        Err(error) => xml_error(error),
-    }
 }
 
 #[utoipa::path(
@@ -68,25 +45,106 @@ pub async fn dispatch_esb(body: web::Bytes, state: web::Data<AppState>) -> impl 
     path = "/api/openapi.json",
     responses((status = 200))
 )]
-#[get("/api/openapi.json")]
+#[actix_web::get("/api/openapi.json")]
 pub async fn openapi_json() -> impl Responder {
     HttpResponse::Ok().json(crate::openapi::ApiDoc::openapi())
 }
 
-fn xml_error(error: ServiceError) -> HttpResponse {
+pub async fn dispatch(
+    request: HttpRequest,
+    body: web::Bytes,
+    state: web::Data<AppState>,
+) -> HttpResponse {
+    let parsed = match service::parse_request(
+        request.method().as_str(),
+        request.uri().to_string().as_str(),
+        request.headers(),
+        &body,
+    ) {
+        Ok(parsed) => parsed,
+        Err(error) => return request_error(error, &request),
+    };
+
+    match service::dispatch(&state.services, &parsed).await {
+        Ok(response) => {
+            let status = StatusCode::from_u16(response.status_code).unwrap_or(StatusCode::OK);
+            let mut builder = HttpResponse::build(status);
+            for (name, value) in response.headers {
+                if name.eq_ignore_ascii_case("content-type") {
+                    continue;
+                }
+                if let (Ok(name), Ok(value)) =
+                    (HeaderName::try_from(name), HeaderValue::try_from(value))
+                {
+                    builder.insert_header((name, value));
+                }
+            }
+            builder
+                .content_type(response.content_type)
+                .body(response.raw_body)
+        }
+        Err(error) => request_error(error, &request),
+    }
+}
+
+fn request_error(error: ServiceError, request: &HttpRequest) -> HttpResponse {
     let status = match &error {
         ServiceError::Parse(_) | ServiceError::Validation(_) => StatusCode::BAD_REQUEST,
+        ServiceError::NoMatch => StatusCode::NOT_FOUND,
         ServiceError::Remote(_) => StatusCode::BAD_GATEWAY,
         ServiceError::Template(_) | ServiceError::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,
     };
     let message = error.to_string();
+    if prefers_json(request) {
+        return HttpResponse::build(status)
+            .content_type("application/json")
+            .body(serde_json::json!({"error": message}).to_string());
+    }
+    if prefers_xml(request) {
+        return HttpResponse::build(status)
+            .content_type("application/xml")
+            .body(format!(
+                "<error><status>{}</status><message>{}</message></error>",
+                status.as_u16(),
+                xml_escape(&message)
+            ));
+    }
     HttpResponse::build(status)
-        .content_type("application/xml")
-        .body(format!(
-            "<error><ret_code>{}</ret_code><ret_msg>{}</ret_msg></error>",
-            status.as_u16(),
-            xml_escape(&message)
-        ))
+        .content_type("text/plain")
+        .body(message)
+}
+
+fn prefers_json(request: &HttpRequest) -> bool {
+    request
+        .headers()
+        .get(CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|value| {
+            value
+                .split(';')
+                .next()
+                .unwrap_or_default()
+                .trim()
+                .ends_with("json")
+        })
+        || request
+            .headers()
+            .get(ACCEPT)
+            .and_then(|value| value.to_str().ok())
+            .is_some_and(|value| value.contains("json"))
+}
+
+fn prefers_xml(request: &HttpRequest) -> bool {
+    request
+        .headers()
+        .get(CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|value| value.contains("xml"))
+        || request
+            .headers()
+            .get(ACCEPT)
+            .and_then(|value| value.to_str().ok())
+            .is_some_and(|value| value.contains("xml"))
 }
 
 fn xml_escape(value: &str) -> String {

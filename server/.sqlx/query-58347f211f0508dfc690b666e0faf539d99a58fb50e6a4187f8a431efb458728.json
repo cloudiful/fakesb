@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select count(*) over () as \"total!\",\n       id,\n       name,\n       content_type,\n       raw_template,\n       format,\n       enabled,\n       note,\n       created_at,\n       updated_at\nfrom response_templates\norder by id desc\nlimit $1 offset $2\n",
+  "query": "select count(*) over () as \"total!\",\n       id,\n       name,\n       content_type,\n       raw_template,\n       format,\n       status_code,\n       headers,\n       enabled,\n       note,\n       created_at,\n       updated_at\nfrom response_templates\norder by id desc\nlimit $1 offset $2\n",
   "describe": {
     "columns": [
       {
@@ -66,6 +66,28 @@
       },
       {
         "ordinal": 6,
+        "name": "status_code",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "response_templates",
+            "name": "status_code"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "headers",
+        "type_info": "Jsonb",
+        "origin": {
+          "Table": {
+            "table": "response_templates",
+            "name": "headers"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
         "name": "enabled",
         "type_info": "Bool",
         "origin": {
@@ -76,7 +98,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 9,
         "name": "note",
         "type_info": "Text",
         "origin": {
@@ -87,7 +109,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 10,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -98,7 +120,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 11,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -123,10 +145,12 @@
       false,
       false,
       false,
+      false,
+      false,
       true,
       false,
       false
     ]
   },
-  "hash": "460a6cd091ab1c4e0d8ad874ef2139185a241506e8b20586829335fa2881089e"
+  "hash": "58347f211f0508dfc690b666e0faf539d99a58fb50e6a4187f8a431efb458728"
 }

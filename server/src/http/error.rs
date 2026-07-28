@@ -11,6 +11,7 @@ pub fn service_error(error: ServiceError) -> HttpResponse {
         ServiceError::Template(_) | ServiceError::Database(_) => {
             actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
         }
+        ServiceError::NoMatch => actix_web::http::StatusCode::NOT_FOUND,
     };
     HttpResponse::build(status).json(serde_json::json!({"error": error.to_string()}))
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into rules(\n    service_code,\n    message_type,\n    message_code,\n    target_id,\n    mode,\n    response_template_id,\n    priority,\n    enabled,\n    note\n)\nvalues ($1, $2, $3, $4, $5, $6, $7, $8, $9)\nreturning id\n",
+  "query": "insert into rules(\n    matcher,\n    target_id,\n    action,\n    response_template_id,\n    priority,\n    enabled,\n    note\n)\nvalues ($1, $2, $3, $4, $5, $6, $7)\nreturning id\n",
   "describe": {
     "columns": [
       {
@@ -17,9 +17,7 @@
     ],
     "parameters": {
       "Left": [
-        "Text",
-        "Text",
-        "Text",
+        "Jsonb",
         "Int8",
         "Text",
         "Int8",
@@ -32,5 +30,5 @@
       false
     ]
   },
-  "hash": "5fc3417e10536c8c7ad2e3809ec2bd9d6a3d3d3ae65d7be3316da60e8af1b04e"
+  "hash": "4db1baf83b990ef308fcdf9dfb49873aec68dc6044229c5eb6b899216c99f6e4"
 }

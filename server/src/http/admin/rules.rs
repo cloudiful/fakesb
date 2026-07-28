@@ -39,11 +39,9 @@ pub async fn update(
 
 fn input(payload: &RulePayload) -> RuleInput<'_> {
     RuleInput {
-        service_code: &payload.service_code,
-        message_type: &payload.message_type,
-        message_code: &payload.message_code,
+        matcher: &payload.matcher,
         target_id: payload.target_id,
-        mode: payload.mode,
+        action: payload.action,
         response_template_id: payload.response_template_id,
         priority: payload.priority.unwrap_or(0),
         enabled: payload.enabled.unwrap_or(true),

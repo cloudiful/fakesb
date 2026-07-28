@@ -1,14 +1,14 @@
-use crate::domain::{EsbResponse, ParsedEsbMessage, RuleMode, SnapshotKind};
+use crate::domain::{MockRequest, MockResponse, RuleAction, SnapshotKind};
 use crate::repositories;
 use crate::service::{AppServices, ServiceError};
 
 pub(super) async fn record_success(
     services: &AppServices,
-    request: &ParsedEsbMessage,
+    request: &MockRequest,
     rule_id: Option<i64>,
     target_id: Option<i64>,
-    mode: RuleMode,
-    response: &EsbResponse,
+    action: RuleAction,
+    response: &MockResponse,
     latency_ms: i64,
 ) -> Result<(), ServiceError> {
     let log_id = repositories::logs::insert(
@@ -16,13 +16,12 @@ pub(super) async fn record_success(
         request,
         rule_id,
         target_id,
-        Some(&mode),
+        Some(action),
         Some(response),
         Some(latency_ms),
         None,
     )
-    .await
-    .map_err(ServiceError::from)?;
+    .await?;
 
     if let Err(error) = insert_snapshots(services, log_id, request, response).await {
         let message = error.to_string();
@@ -34,10 +33,10 @@ pub(super) async fn record_success(
 
 pub(super) async fn record_failure(
     services: &AppServices,
-    request: &ParsedEsbMessage,
+    request: &MockRequest,
     rule_id: Option<i64>,
     target_id: Option<i64>,
-    mode: Option<RuleMode>,
+    action: Option<RuleAction>,
     latency_ms: i64,
     error: &ServiceError,
 ) {
@@ -46,7 +45,7 @@ pub(super) async fn record_failure(
         request,
         rule_id,
         target_id,
-        mode.as_ref(),
+        action,
         None,
         Some(latency_ms),
         Some(&error.to_string()),
@@ -61,7 +60,10 @@ pub(super) async fn record_failure(
         log_id,
         SnapshotKind::Request,
         &request.raw_body,
-        &request.normalized_json,
+        request
+            .normalized_body
+            .as_ref()
+            .unwrap_or(&serde_json::Value::Null),
     )
     .await;
 }
@@ -69,15 +71,18 @@ pub(super) async fn record_failure(
 async fn insert_snapshots(
     services: &AppServices,
     log_id: i64,
-    request: &ParsedEsbMessage,
-    response: &EsbResponse,
+    request: &MockRequest,
+    response: &MockResponse,
 ) -> Result<(), ServiceError> {
     repositories::logs::insert_snapshot(
         services.pool(),
         log_id,
         SnapshotKind::Request,
         &request.raw_body,
-        &request.normalized_json,
+        request
+            .normalized_body
+            .as_ref()
+            .unwrap_or(&serde_json::Value::Null),
     )
     .await?;
     repositories::logs::insert_snapshot(
@@ -86,7 +91,7 @@ async fn insert_snapshots(
         SnapshotKind::Response,
         &response.raw_body,
         response
-            .normalized_json
+            .normalized_body
             .as_ref()
             .unwrap_or(&serde_json::Value::Null),
     )

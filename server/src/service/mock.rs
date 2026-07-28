@@ -1,29 +1,32 @@
-use crate::domain::{EsbResponse, ParsedEsbMessage};
+use crate::domain::{MockRequest, ResponseTemplate};
 use crate::repositories;
 use crate::service::{AppServices, ServiceError};
 
 pub(super) async fn render(
     services: &AppServices,
-    request: &ParsedEsbMessage,
+    request: &MockRequest,
     template_id: Option<i64>,
-) -> Result<EsbResponse, ServiceError> {
-    let template_id =
-        template_id.ok_or_else(|| ServiceError::Template("mock rule missing template".into()))?;
+) -> Result<crate::domain::MockResponse, ServiceError> {
+    let template_id = template_id
+        .ok_or_else(|| ServiceError::Template("static rule missing response template".into()))?;
     let template = repositories::templates::find_enabled(services.pool(), template_id)
         .await?
         .ok_or_else(|| ServiceError::Template("response template is missing or disabled".into()))?;
-    let raw_body = crate::template::render(&template.raw_template, request)?;
-    let normalized_json = xml::convert::to_json(&raw_body)
-        .ok()
-        .map(|json| crate::http::json::simplify(&json));
-    let (ret_code, ret_msg) = super::response::extract_ret_fields(normalized_json.as_ref());
+    render_template(&template, request)
+}
 
-    Ok(EsbResponse {
-        status_code: 200,
-        content_type: template.content_type,
+fn render_template(
+    template: &ResponseTemplate,
+    request: &MockRequest,
+) -> Result<crate::domain::MockResponse, ServiceError> {
+    let raw_body =
+        crate::template::render_for_format(&template.raw_template, &template.format, request)?;
+    let headers =
+        crate::domain::json_to_headers(&template.headers).map_err(ServiceError::Validation)?;
+    Ok(crate::service::response::from_body(
+        template.status_code,
+        template.content_type.clone(),
+        headers,
         raw_body,
-        normalized_json,
-        ret_code,
-        ret_msg,
-    })
+    ))
 }

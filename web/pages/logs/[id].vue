@@ -5,9 +5,7 @@ const api = useApi()
 const id = computed(() => Number(route.params.id))
 const { data, pending, error } = await useAsyncData(`log-${id.value}`, () => api.getLog(id.value))
 
-function formatDate(value?: string | null) {
-  return value ? new Date(value).toLocaleString() : '-'
-}
+function formatDate(value?: string | null) { return value ? new Date(value).toLocaleString() : '-' }
 </script>
 
 <template>
@@ -19,18 +17,13 @@ function formatDate(value?: string | null) {
     <USkeleton v-else-if="pending" class="mt-6 h-32" />
     <template v-else-if="data">
       <UPageGrid class="mt-6">
-        <UPageCard :title="t('app.fields.service')" :description="`${data.service_code} / ${data.message_type} / ${data.message_code}`" />
-        <UPageCard :title="t('app.fields.returnCode')" :description="`${data.http_status_code ?? '-'} / ${data.ret_code ?? '-'}`" />
+        <UPageCard :title="t('app.fields.request')" :description="`${data.method} ${data.path}`" />
+        <UPageCard :title="t('app.fields.action')" :description="`${data.action ?? '-'} / ${data.http_status_code ?? '-'}`" />
+        <UPageCard :title="t('app.fields.bodyFormat')" :description="data.body_format" />
         <UPageCard :title="t('app.fields.latency')" :description="`${data.latency_ms ?? '-'} ms`" />
         <UPageCard :title="t('app.fields.time')" :description="formatDate(data.occurred_at)" />
       </UPageGrid>
-      <UAlert
-        v-if="data.error_message"
-        color="error"
-        :title="t('app.fields.errorMessage')"
-        :description="data.error_message"
-        class="mt-6"
-      />
+      <UAlert v-if="data.error_message" color="error" :title="t('app.fields.errorMessage')" :description="data.error_message" class="mt-6" />
       <div class="mt-6 grid gap-6 lg:grid-cols-2">
         <UCard v-for="snapshot in data.snapshots" :key="snapshot.id" :ui="{ body: 'p-0' }">
           <template #header><div class="font-medium">{{ snapshot.kind }}</div></template>

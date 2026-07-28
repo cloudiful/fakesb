@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into response_templates(name, content_type, raw_template, format, enabled, note)\nvalues ($1, $2, $3, $4, $5, $6)\nreturning id\n",
+  "query": "insert into response_templates(name, content_type, raw_template, format, status_code, headers, enabled, note)\nvalues ($1, $2, $3, $4, $5, $6, $7, $8)\nreturning id\n",
   "describe": {
     "columns": [
       {
@@ -21,6 +21,8 @@
         "Text",
         "Text",
         "Text",
+        "Int4",
+        "Jsonb",
         "Bool",
         "Text"
       ]
@@ -29,5 +31,5 @@
       false
     ]
   },
-  "hash": "2efb4a4b6803b009e5cc910bae742c650cf1883277043a96397f10d2225ad294"
+  "hash": "fcbb4226017658b491aa721a763494626ac4b43e83f563203cc03b67eb0b6cdd"
 }

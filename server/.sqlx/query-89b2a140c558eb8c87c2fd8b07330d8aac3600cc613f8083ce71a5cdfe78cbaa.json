@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id, name, content_type, raw_template, format, enabled, note, created_at, updated_at\nfrom response_templates\nwhere id = $1 and enabled = true\n",
+  "query": "select id,\n       matcher,\n       target_id,\n       action,\n       response_template_id,\n       priority,\n       enabled,\n       note,\n       created_at,\n       updated_at\nfrom rules\nwhere enabled = true\norder by priority desc, id asc\n",
   "describe": {
     "columns": [
       {
@@ -9,110 +9,120 @@
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "response_templates",
+            "table": "rules",
             "name": "id"
           }
         }
       },
       {
         "ordinal": 1,
-        "name": "name",
-        "type_info": "Text",
+        "name": "matcher",
+        "type_info": "Jsonb",
         "origin": {
           "Table": {
-            "table": "response_templates",
-            "name": "name"
+            "table": "rules",
+            "name": "matcher"
           }
         }
       },
       {
         "ordinal": 2,
-        "name": "content_type",
-        "type_info": "Text",
+        "name": "target_id",
+        "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "response_templates",
-            "name": "content_type"
+            "table": "rules",
+            "name": "target_id"
           }
         }
       },
       {
         "ordinal": 3,
-        "name": "raw_template",
+        "name": "action",
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "response_templates",
-            "name": "raw_template"
+            "table": "rules",
+            "name": "action"
           }
         }
       },
       {
         "ordinal": 4,
-        "name": "format",
-        "type_info": "Text",
+        "name": "response_template_id",
+        "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "response_templates",
-            "name": "format"
+            "table": "rules",
+            "name": "response_template_id"
           }
         }
       },
       {
         "ordinal": 5,
-        "name": "enabled",
-        "type_info": "Bool",
+        "name": "priority",
+        "type_info": "Int4",
         "origin": {
           "Table": {
-            "table": "response_templates",
-            "name": "enabled"
+            "table": "rules",
+            "name": "priority"
           }
         }
       },
       {
         "ordinal": 6,
-        "name": "note",
-        "type_info": "Text",
+        "name": "enabled",
+        "type_info": "Bool",
         "origin": {
           "Table": {
-            "table": "response_templates",
-            "name": "note"
+            "table": "rules",
+            "name": "enabled"
           }
         }
       },
       {
         "ordinal": 7,
-        "name": "created_at",
-        "type_info": "Timestamptz",
+        "name": "note",
+        "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "response_templates",
-            "name": "created_at"
+            "table": "rules",
+            "name": "note"
           }
         }
       },
       {
         "ordinal": 8,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "response_templates",
+            "table": "rules",
             "name": "updated_at"
           }
         }
       }
     ],
     "parameters": {
-      "Left": [
-        "Int8"
-      ]
+      "Left": []
     },
     "nullable": [
       false,
       false,
+      true,
       false,
-      false,
+      true,
       false,
       false,
       true,
@@ -120,5 +130,5 @@
       false
     ]
   },
-  "hash": "e8793d788a08241f26ebf1b3d576cc18af05bb60edf06b1b0787ccd67c9ccde7"
+  "hash": "89b2a140c558eb8c87c2fd8b07330d8aac3600cc613f8083ce71a5cdfe78cbaa"
 }

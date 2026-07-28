@@ -2,9 +2,12 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 
-use crate::domain::{PaginationParams, RequestLog, ResponseTemplate, Rule, RuleMode, Target};
+use crate::domain::{
+    PaginationParams, RequestLog, ResponseTemplate, Rule, RuleAction, RuleMatcher, Target,
+};
 
 #[derive(Debug, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
 pub struct PagingQuery {
     pub offset: Option<i64>,
     pub limit: Option<i64>,
@@ -27,11 +30,9 @@ pub struct TargetPayload {
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct RulePayload {
-    pub service_code: String,
-    pub message_type: String,
-    pub message_code: String,
+    pub matcher: RuleMatcher,
     pub target_id: Option<i64>,
-    pub mode: RuleMode,
+    pub action: RuleAction,
     pub response_template_id: Option<i64>,
     pub priority: Option<i32>,
     pub enabled: Option<bool>,
@@ -44,19 +45,21 @@ pub struct TemplatePayload {
     pub content_type: Option<String>,
     pub raw_template: String,
     pub format: Option<String>,
+    pub status_code: Option<u16>,
+    pub headers: Option<serde_json::Value>,
     pub enabled: Option<bool>,
     pub note: Option<String>,
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
+#[into_params(parameter_in = Query)]
 pub struct LogQuery {
     pub offset: Option<i64>,
     pub limit: Option<i64>,
-    pub service_code: Option<String>,
-    pub message_type: Option<String>,
-    pub message_code: Option<String>,
-    pub mode: Option<RuleMode>,
-    pub ret_code: Option<String>,
+    pub method: Option<String>,
+    pub path: Option<String>,
+    pub action: Option<RuleAction>,
+    pub status_code: Option<i32>,
     pub start_time: Option<DateTime<Utc>>,
     pub end_time: Option<DateTime<Utc>>,
 }
@@ -69,11 +72,10 @@ impl LogQuery {
     pub fn into_service_query(self) -> crate::service::LogQuery {
         crate::service::LogQuery {
             page: self.pagination(),
-            service_code: normalize(self.service_code),
-            message_type: normalize(self.message_type),
-            message_code: normalize(self.message_code),
-            mode: self.mode.map(|value| value.as_str().to_string()),
-            ret_code: normalize(self.ret_code),
+            method: normalize(self.method),
+            path: normalize(self.path),
+            action: self.action.map(|value| value.as_str().to_string()),
+            status_code: self.status_code,
             start_time: self.start_time,
             end_time: self.end_time,
         }

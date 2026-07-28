@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "update response_templates\nset name = $2,\n    content_type = $3,\n    raw_template = $4,\n    format = $5,\n    enabled = $6,\n    note = $7,\n    updated_at = now()\nwhere id = $1\nreturning id\n",
+  "query": "update response_templates\nset name = $2,\n    content_type = $3,\n    raw_template = $4,\n    format = $5,\n    status_code = $6,\n    headers = $7,\n    enabled = $8,\n    note = $9,\n    updated_at = now()\nwhere id = $1\nreturning id\n",
   "describe": {
     "columns": [
       {
@@ -22,6 +22,8 @@
         "Text",
         "Text",
         "Text",
+        "Int4",
+        "Jsonb",
         "Bool",
         "Text"
       ]
@@ -30,5 +32,5 @@
       false
     ]
   },
-  "hash": "8ea047c47cbe9f9cc3b769ca911de88db9794515937ba20699d83b69b16ea4d7"
+  "hash": "3221393c32e7305ba5461ca9225475ef5b9c1314fd76562b092258645ec00b45"
 }

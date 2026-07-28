@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import type { Rule, RulePayload } from '~/types/api'
+import type { Rule, RuleAction, RuleMatcher, RulePayload } from '~/types/api'
 
-type RuleForm = Omit<RulePayload, 'note' | 'target_id' | 'response_template_id'> & {
-  note: string
+type RuleForm = {
+  matcher: string
   target_id?: number
+  action: RuleAction
   response_template_id?: number
+  priority: number
+  enabled: boolean
+  note: string
 }
 
 const { t } = useI18n()
@@ -15,11 +19,9 @@ const pageSize = 20
 const open = ref(false)
 const editingId = ref<number | null>(null)
 const form = reactive<RuleForm>({
-  service_code: '',
-  message_type: '',
-  message_code: '',
+  matcher: '{\n  "method": "POST",\n  "path": "/example"\n}',
   target_id: undefined,
-  mode: 'passthrough',
+  action: 'proxy',
   response_template_id: undefined,
   priority: 0,
   enabled: true,
@@ -33,36 +35,37 @@ const [{ data, pending, error, refresh }, { data: targets }, { data: templates }
 ])
 
 const columns = computed(() => [
-  { accessorKey: 'service_code', header: t('app.fields.service') },
-  { accessorKey: 'message_type', header: t('app.fields.messageType') },
-  { accessorKey: 'message_code', header: t('app.fields.messageCode') },
-  { accessorKey: 'mode', header: t('app.fields.mode') },
+  { accessorKey: 'matcher', header: t('app.fields.matcher') },
+  { accessorKey: 'action', header: t('app.fields.action') },
   { accessorKey: 'priority', header: t('app.fields.priority') },
   { accessorKey: 'enabled', header: t('app.fields.status') },
   { id: 'actions', header: '' },
 ])
 const targetOptions = computed(() => (targets.value?.items ?? []).map((item) => ({ label: item.name, value: item.id })))
 const templateOptions = computed(() => (templates.value?.items ?? []).map((item) => ({ label: item.name, value: item.id })))
-const modeOptions = computed(() => [
-  { label: t('app.modes.passthrough'), value: 'passthrough' },
-  { label: t('app.modes.mock'), value: 'mock' },
+const actionOptions = computed(() => [
+  { label: t('app.actions.proxy'), value: 'proxy' },
+  { label: t('app.actions.static'), value: 'static' },
 ])
 
 function resetForm() {
   Object.assign(form, {
-    service_code: '', message_type: '', message_code: '', target_id: undefined,
-    mode: 'passthrough', response_template_id: undefined, priority: 0, enabled: true, note: '',
+    matcher: '{\n  "method": "POST",\n  "path": "/example"\n}',
+    target_id: undefined,
+    action: 'proxy',
+    response_template_id: undefined,
+    priority: 0,
+    enabled: true,
+    note: '',
   })
   editingId.value = null
 }
 
 function edit(row: Rule) {
   Object.assign(form, {
-    service_code: row.service_code,
-    message_type: row.message_type,
-    message_code: row.message_code,
+    matcher: JSON.stringify(row.matcher, null, 2),
     target_id: row.target_id ?? undefined,
-    mode: row.mode,
+    action: row.action,
     response_template_id: row.response_template_id ?? undefined,
     priority: row.priority,
     enabled: row.enabled,
@@ -72,10 +75,27 @@ function edit(row: Rule) {
   open.value = true
 }
 
+function payload(): RulePayload {
+  return {
+    matcher: JSON.parse(form.matcher) as RuleMatcher,
+    target_id: form.target_id,
+    action: form.action,
+    response_template_id: form.response_template_id,
+    priority: form.priority,
+    enabled: form.enabled,
+    note: form.note,
+  }
+}
+
+function matcherLabel(matcher: RuleMatcher) {
+  return [matcher.method, matcher.path ?? matcher.path_pattern].filter(Boolean).join(' ') || JSON.stringify(matcher)
+}
+
 async function save() {
   try {
-    if (editingId.value) await api.updateRule(editingId.value, form)
-    else await api.createRule(form)
+    const body = payload()
+    if (editingId.value) await api.updateRule(editingId.value, body)
+    else await api.createRule(body)
     open.value = false
     resetForm()
     await refresh()
@@ -93,22 +113,21 @@ async function save() {
     </UPageHeader>
     <UAlert v-if="error" color="error" :title="t('app.error')" class="mt-6" />
     <UTable :data="data?.items ?? []" :columns="columns" :loading="pending" class="mt-6">
-      <template #mode-cell="{ row }"><UBadge color="neutral" variant="subtle">{{ row.original.mode }}</UBadge></template>
+      <template #matcher-cell="{ row }"><code class="text-xs">{{ matcherLabel(row.original.matcher) }}</code></template>
+      <template #action-cell="{ row }"><UBadge color="neutral" variant="subtle">{{ row.original.action }}</UBadge></template>
       <template #enabled-cell="{ row }"><StatusBadge :enabled="row.original.enabled" /></template>
       <template #actions-cell="{ row }"><UButton icon="i-mdi-pencil" color="neutral" variant="ghost" :aria-label="t('app.edit')" @click="edit(row.original)" /></template>
     </UTable>
     <div class="mt-4 flex justify-end"><UPagination v-model:page="page" :page-count="pageSize" :total="data?.total ?? 0" /></div>
 
-    <UModal v-model:open="open" :title="editingId ? t('app.edit') : t('app.create')">
+    <UModal v-model:open="open" :title="editingId ? t('app.edit') : t('app.create')" :ui="{ content: 'sm:max-w-3xl' }">
       <template #body>
         <UForm :state="form" class="space-y-4" @submit="save">
-          <div class="grid gap-4 sm:grid-cols-3">
-            <UFormField :label="t('app.fields.service')" name="service_code" required><UInput v-model="form.service_code" /></UFormField>
-            <UFormField :label="t('app.fields.messageType')" name="message_type" required><UInput v-model="form.message_type" /></UFormField>
-            <UFormField :label="t('app.fields.messageCode')" name="message_code" required><UInput v-model="form.message_code" /></UFormField>
-          </div>
+          <UFormField :label="t('app.fields.matcher')" name="matcher" required>
+            <UTextarea v-model="form.matcher" :rows="12" class="font-mono" />
+          </UFormField>
           <div class="grid gap-4 sm:grid-cols-2">
-            <UFormField :label="t('app.fields.mode')" name="mode" required><USelect v-model="form.mode" :items="modeOptions" /></UFormField>
+            <UFormField :label="t('app.fields.action')" name="action" required><USelect v-model="form.action" :items="actionOptions" /></UFormField>
             <UFormField :label="t('app.fields.priority')" name="priority"><UInput v-model.number="form.priority" type="number" /></UFormField>
             <UFormField :label="t('app.fields.target')" name="target_id"><USelect v-model="form.target_id" :items="targetOptions" /></UFormField>
             <UFormField :label="t('app.fields.responseTemplate')" name="response_template_id"><USelect v-model="form.response_template_id" :items="templateOptions" /></UFormField>
