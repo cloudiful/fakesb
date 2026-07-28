@@ -1,0 +1,14 @@
+@import '@nuxt/ui';
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-default text-default antialiased;
+}
+
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

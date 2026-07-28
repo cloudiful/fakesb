@@ -1,0 +1,187 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select count(*) over () as \"total!\",\n       id,\n       occurred_at,\n       rule_id,\n       target_id,\n       mode,\n       service_code,\n       message_type,\n       message_code,\n       http_status_code,\n       ret_code,\n       ret_msg,\n       latency_ms,\n       error_message\nfrom request_logs\nwhere ($1::text is null or service_code = $1)\n  and ($2::text is null or message_type = $2)\n  and ($3::text is null or message_code = $3)\n  and ($4::text is null or mode = $4)\n  and ($5::text is null or ret_code = $5)\n  and ($6::timestamptz is null or occurred_at >= $6)\n  and ($7::timestamptz is null or occurred_at <= $7)\norder by occurred_at desc, id desc\nlimit $8 offset $9\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "total!",
+        "type_info": "Int8",
+        "origin": "Expression"
+      },
+      {
+        "ordinal": 1,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "occurred_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "occurred_at"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "rule_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "rule_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "target_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "target_id"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "mode",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "mode"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "service_code",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "service_code"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "message_type",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "message_type"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "message_code",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "message_code"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "http_status_code",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "http_status_code"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "ret_code",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "ret_code"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "ret_msg",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "ret_msg"
+          }
+        }
+      },
+      {
+        "ordinal": 12,
+        "name": "latency_ms",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "latency_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 13,
+        "name": "error_message",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "error_message"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Timestamptz",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      false,
+      false,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "8cf8cdcf8feb8b26aab970cc4f9b242fa2757c5b5fd9166cccff3e6bee2e5d11"
+}

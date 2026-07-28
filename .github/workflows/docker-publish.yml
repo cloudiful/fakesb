@@ -1,0 +1,297 @@
+name: Release Docker Images
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
+  PUBLISH_IMAGES: ${{ startsWith(github.ref, 'refs/tags/v') }}
+
+jobs:
+  build-binaries:
+    name: Build ${{ matrix.target }} binary
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-24.04
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: "0"
+      SQLX_OFFLINE: "true"
+      TARGET: ${{ matrix.target }}
+      RELEASE_ARCHIVE: fakesb-${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'manual' }}-${{ matrix.target }}.tar.gz
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Restore Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: server
+
+      - name: Build binary
+        working-directory: server
+        run: cargo build --release --target "${TARGET}" --bin fakESB
+
+      - name: Validate and package binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          binary="target/${TARGET}/release/fakESB"
+          test -x "${binary}"
+          size="$(wc -c < "${binary}")"
+          test "${size}" -gt 0
+          case "${TARGET}" in
+            x86_64-unknown-linux-gnu)
+              file "${binary}" | grep -Eqi 'ELF 64-bit.*x86-64'
+              ;;
+            aarch64-unknown-linux-gnu)
+              file "${binary}" | grep -Eqi 'ELF 64-bit.*(aarch64|ARM)'
+              ;;
+            *)
+              echo "unsupported target: ${TARGET}" >&2
+              exit 1
+              ;;
+          esac
+          echo "${binary} size=${size} bytes"
+          rm -rf package
+          mkdir -p package
+          install -Dm755 "${binary}" package/fakESB
+          (cd package && sha256sum fakESB > SHA256SUMS)
+          tar -czf "${RELEASE_ARCHIVE}" -C package fakESB SHA256SUMS
+          tar -tzf "${RELEASE_ARCHIVE}" | grep -Fx 'fakESB'
+          tar -tzf "${RELEASE_ARCHIVE}" | grep -Fx 'SHA256SUMS'
+
+      - name: Upload binary archive
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: binary-${{ matrix.target }}
+          path: ${{ env.RELEASE_ARCHIVE }}
+          if-no-files-found: error
+          retention-days: 7
+
+  build-image-inputs:
+    name: Build static frontend input
+    needs: build-binaries
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      BINARY_ARCHIVE: fakesb-${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'manual' }}-x86_64-unknown-linux-gnu.tar.gz
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Download amd64 binary
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: binary-x86_64-unknown-linux-gnu
+          path: binary-artifact
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2.2.0
+        with:
+          bun-version: "1.3.14"
+
+      - name: Restore Bun cache
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('web/package.json', 'web/bunfig.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install frontend dependencies
+        working-directory: web
+        run: bun install --no-save --minimum-release-age 604800
+
+      - name: Prepare Docker input directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -xzf "binary-artifact/${BINARY_ARCHIVE}" -C binary-artifact
+
+      - name: Export OpenAPI
+        run: binary-artifact/fakESB export-openapi > web/openapi.json
+
+      - name: Generate frontend
+        working-directory: web
+        run: |
+          bunx openapi-typescript openapi.json -o types/api.generated.ts
+          bun run generate
+          test -f .output/public/index.html
+          mkdir -p ../ci-image-input/frontend-dist
+          cp -R .output/public/. ../ci-image-input/frontend-dist/
+
+      - name: Upload frontend artifact
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: frontend-dist
+          path: ci-image-input/frontend-dist
+          if-no-files-found: error
+          retention-days: 7
+
+  build-images:
+    name: Build and publish ${{ matrix.arch }} image
+    needs: build-image-inputs
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+            platform: linux/amd64
+            target: x86_64-unknown-linux-gnu
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            target: aarch64-unknown-linux-gnu
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'manual' }}-${{ matrix.arch }}
+      LATEST_TAG: latest-${{ matrix.arch }}
+      BINARY_ARCHIVE: fakesb-${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'manual' }}-${{ matrix.target }}.tar.gz
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Download frontend artifact
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: frontend-dist
+          path: ci-image-input/frontend-dist
+
+      - name: Download target binary
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: binary-${{ matrix.target }}
+          path: binary-artifact
+
+      - name: Prepare Docker input directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ci-image-input/app/bin
+          tar -xzf "binary-artifact/${BINARY_ARCHIVE}" -C binary-artifact
+          install -Dm755 binary-artifact/fakESB ci-image-input/app/bin/fakESB
+
+      - name: Log in to GHCR
+        if: env.PUBLISH_IMAGES == 'true'
+        uses: docker/login-action@v4.5.1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4.2.0
+
+      - name: Build and publish image
+        uses: docker/build-push-action@v7.3.0
+        with:
+          context: .
+          file: ./Dockerfile
+          target: prebuilt-runtime
+          platforms: ${{ matrix.platform }}
+          push: ${{ env.PUBLISH_IMAGES == 'true' }}
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.IMAGE_NAME }}:${{ env.LATEST_TAG }}
+          cache-from: type=gha,scope=fakesb-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=fakesb-${{ matrix.arch }}
+
+  publish-manifest:
+    name: Publish multi-architecture manifests
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    needs: build-images
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@v4.5.1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4.2.0
+
+      - name: Publish version and latest manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create \
+            --tag "${IMAGE_NAME}:${{ github.ref_name }}" \
+            "${IMAGE_NAME}:${{ github.ref_name }}-amd64" \
+            "${IMAGE_NAME}:${{ github.ref_name }}-arm64"
+          docker buildx imagetools create \
+            --tag "${IMAGE_NAME}:latest" \
+            "${IMAGE_NAME}:latest-amd64" \
+            "${IMAGE_NAME}:latest-arm64"
+          docker buildx imagetools inspect "${IMAGE_NAME}:${{ github.ref_name }}"
+
+  publish-release:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-binaries
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download binary archives
+        uses: actions/download-artifact@v8.0.1
+        with:
+          pattern: binary-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Verify archives
+        shell: bash
+        working-directory: release-assets
+        run: |
+          set -euo pipefail
+          for archive in fakesb-${{ github.ref_name }}-*.tar.gz; do
+            test -f "${archive}"
+            tar -xzf "${archive}"
+            sha256sum -c SHA256SUMS
+            rm -f fakESB SHA256SUMS
+          done
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: release-assets/fakesb-${{ github.ref_name }}-*.tar.gz

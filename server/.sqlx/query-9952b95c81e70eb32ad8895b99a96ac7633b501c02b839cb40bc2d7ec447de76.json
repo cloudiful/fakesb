@@ -1,0 +1,37 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update rules\nset service_code = $2,\n    message_type = $3,\n    message_code = $4,\n    target_id = $5,\n    mode = $6,\n    response_template_id = $7,\n    priority = $8,\n    enabled = $9,\n    note = $10,\n    updated_at = now()\nwhere id = $1\nreturning id\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Text",
+        "Int8",
+        "Int4",
+        "Bool",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "9952b95c81e70eb32ad8895b99a96ac7633b501c02b839cb40bc2d7ec447de76"
+}

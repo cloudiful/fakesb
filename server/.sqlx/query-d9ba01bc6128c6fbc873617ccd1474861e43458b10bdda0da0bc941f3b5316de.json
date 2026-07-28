@@ -1,0 +1,38 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into request_logs(\n    occurred_at,\n    rule_id,\n    target_id,\n    mode,\n    service_code,\n    message_type,\n    message_code,\n    http_status_code,\n    ret_code,\n    ret_msg,\n    latency_ms,\n    error_message\n)\nvalues (now(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)\nreturning id\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "request_logs",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d9ba01bc6128c6fbc873617ccd1474861e43458b10bdda0da0bc941f3b5316de"
+}

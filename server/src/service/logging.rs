@@ -1,0 +1,95 @@
+use crate::domain::{EsbResponse, ParsedEsbMessage, RuleMode, SnapshotKind};
+use crate::repositories;
+use crate::service::{AppServices, ServiceError};
+
+pub(super) async fn record_success(
+    services: &AppServices,
+    request: &ParsedEsbMessage,
+    rule_id: Option<i64>,
+    target_id: Option<i64>,
+    mode: RuleMode,
+    response: &EsbResponse,
+    latency_ms: i64,
+) -> Result<(), ServiceError> {
+    let log_id = repositories::logs::insert(
+        services.pool(),
+        request,
+        rule_id,
+        target_id,
+        Some(&mode),
+        Some(response),
+        Some(latency_ms),
+        None,
+    )
+    .await
+    .map_err(ServiceError::from)?;
+
+    if let Err(error) = insert_snapshots(services, log_id, request, response).await {
+        let message = error.to_string();
+        let _ = repositories::logs::mark_error(services.pool(), log_id, &message).await;
+        return Err(error);
+    }
+    Ok(())
+}
+
+pub(super) async fn record_failure(
+    services: &AppServices,
+    request: &ParsedEsbMessage,
+    rule_id: Option<i64>,
+    target_id: Option<i64>,
+    mode: Option<RuleMode>,
+    latency_ms: i64,
+    error: &ServiceError,
+) {
+    let Ok(log_id) = repositories::logs::insert(
+        services.pool(),
+        request,
+        rule_id,
+        target_id,
+        mode.as_ref(),
+        None,
+        Some(latency_ms),
+        Some(&error.to_string()),
+    )
+    .await
+    else {
+        return;
+    };
+
+    let _ = repositories::logs::insert_snapshot(
+        services.pool(),
+        log_id,
+        SnapshotKind::Request,
+        &request.raw_body,
+        &request.normalized_json,
+    )
+    .await;
+}
+
+async fn insert_snapshots(
+    services: &AppServices,
+    log_id: i64,
+    request: &ParsedEsbMessage,
+    response: &EsbResponse,
+) -> Result<(), ServiceError> {
+    repositories::logs::insert_snapshot(
+        services.pool(),
+        log_id,
+        SnapshotKind::Request,
+        &request.raw_body,
+        &request.normalized_json,
+    )
+    .await?;
+    repositories::logs::insert_snapshot(
+        services.pool(),
+        log_id,
+        SnapshotKind::Response,
+        &response.raw_body,
+        response
+            .normalized_json
+            .as_ref()
+            .unwrap_or(&serde_json::Value::Null),
+    )
+    .await?;
+    Ok(())
+}

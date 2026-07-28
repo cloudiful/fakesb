@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into message_snapshots(log_id, kind, raw_body, normalized_json)\nvalues ($1, $2, $3, $4)\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text",
+        "Jsonb"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ba2f239905f1f62575e46b1186effb4da585ec76b907936a04c487e1a4ddfe97"
+}

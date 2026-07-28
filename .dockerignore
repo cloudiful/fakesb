@@ -1,0 +1,10 @@
+.git
+server/target
+web/node_modules
+web/.output
+web/.nuxt
+web/bun.lock
+**/*.log
+**/.DS_Store
+server/.cargo
+web/.vite

@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "update response_templates\nset name = $2,\n    content_type = $3,\n    raw_template = $4,\n    format = $5,\n    enabled = $6,\n    note = $7,\n    updated_at = now()\nwhere id = $1\nreturning id\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "response_templates",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Bool",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "8ea047c47cbe9f9cc3b769ca911de88db9794515937ba20699d83b69b16ea4d7"
+}

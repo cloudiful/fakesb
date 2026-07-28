@@ -1,0 +1,9 @@
+**/target
+vendor/
+config/config.toml
+.idea/
+log/
+.env
+test/
+
+Cargo.lock

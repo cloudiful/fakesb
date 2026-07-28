@@ -1,0 +1,36 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into rules(\n    service_code,\n    message_type,\n    message_code,\n    target_id,\n    mode,\n    response_template_id,\n    priority,\n    enabled,\n    note\n)\nvalues ($1, $2, $3, $4, $5, $6, $7, $8, $9)\nreturning id\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Int8",
+        "Text",
+        "Int8",
+        "Int4",
+        "Bool",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "5fc3417e10536c8c7ad2e3809ec2bd9d6a3d3d3ae65d7be3316da60e8af1b04e"
+}

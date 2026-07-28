@@ -1,0 +1,162 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select id,\n       service_code,\n       message_type,\n       message_code,\n       target_id,\n       mode,\n       response_template_id,\n       priority,\n       enabled,\n       note,\n       created_at,\n       updated_at\nfrom rules\nwhere enabled = true\n  and service_code = $1\n  and message_type = $2\n  and message_code = $3\norder by priority desc, id asc\nlimit 1\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "service_code",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "service_code"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "message_type",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "message_type"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "message_code",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "message_code"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "target_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "target_id"
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "mode",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "mode"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "response_template_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "response_template_id"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
+        "name": "priority",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "priority"
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "enabled",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "enabled"
+          }
+        }
+      },
+      {
+        "ordinal": 9,
+        "name": "note",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "note"
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "created_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "created_at"
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "updated_at",
+        "type_info": "Timestamptz",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "updated_at"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "93c61317831dce060bbde0c1951646a837aaa187ff3070fe96a34fcff3aefc2f"
+}

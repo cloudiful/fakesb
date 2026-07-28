@@ -1,0 +1,29 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+web/.env
+web/.env.*
+!web/.env.example
+
+# Build output and local dependencies
+target/
+server/target/
+web/node_modules/
+web/.nuxt/
+web/.output/
+web/dist/
+web/bun.lock
+
+# Runtime data
+*.log
+log/
+server/log/
+*.dump
+*.sql.dump
+
+# Certificates and private keys
+*.pem
+*.key
+*.p12
+*.pfx
