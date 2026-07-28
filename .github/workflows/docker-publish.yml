@@ -71,7 +71,7 @@ jobs:
           SCCACHE_BUCKET: sccache
           SCCACHE_ENDPOINT: https://12412d5b061683494ea3e5c217d6a961.r2.cloudflarestorage.com
           SCCACHE_REGION: auto
-        run: cargo build --release --target "${TARGET}" --bin fakESB
+        run: cargo build --release --target "${{ matrix.target }}" --bin fakESB
 
       - name: Show sccache stats
         if: always()
@@ -90,7 +90,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          binary="target/${TARGET}/release/${BINARY_NAME}"
+          binary="server/target/${TARGET}/release/${BINARY_NAME}"
           test -s "${binary}"
           size="$(wc -c < "${binary}")"
           case "${TARGET}" in
@@ -173,7 +173,8 @@ jobs:
         run: chmod +x "binary-artifact/${BINARY_ASSET}"
 
       - name: Export OpenAPI
-        run: binary-artifact/${BINARY_ASSET} export-openapi > web/openapi.json
+        run: |
+          "binary-artifact/${BINARY_ASSET}" export-openapi > web/openapi.json
 
       - name: Generate frontend
         working-directory: web
