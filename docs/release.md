@@ -2,7 +2,7 @@
 
 [简体中文](release.zh-CN.md)
 
-fakESB publishes Linux GNU, Windows x64, and macOS arm64 binaries together with multi-architecture Docker images from the single GitHub Actions workflow at `.github/workflows/docker-publish.yml`.
+fakESB publishes Linux GNU, Windows x64, and macOS arm64 binaries together with multi-architecture Docker images from the GitHub Actions workflow at `.github/workflows/docker-publish.yml`. The Forgejo workflow at `.forgejo/workflows/docker-publish.yml` additionally publishes an amd64 runtime image for the Forgejo registry.
 
 ## Prerequisites
 
@@ -41,6 +41,6 @@ The workflow publishes these raw binary assets:
 - `fakesb-v0.1.0-x86_64-pc-windows-msvc.exe`
 - `fakesb-v0.1.0-aarch64-apple-darwin`
 
-Each binary has a matching `.sha256` checksum asset. Docker images are published to `ghcr.io/<owner>/<repository>` with version and `latest` tags. Both tags are multi-architecture manifests for `linux/amd64` and `linux/arm64`.
+Each binary has a matching `.sha256` checksum asset. GitHub Docker images are published to `ghcr.io/<owner>/<repository>` with version and `latest` tags. Both tags are multi-architecture manifests for `linux/amd64` and `linux/arm64`. Forgejo additionally publishes an amd64 runtime image to `forgejo.cloud1ful.com/<owner>/<repository>` with `latest-amd64` and `v<version>-amd64` tags.
 
-Manual runs from a branch build and validate the release inputs without publishing. A run whose ref is a `v*` tag creates the formal Release and Docker manifests.
+Manual GitHub runs from a branch build and validate the release inputs without publishing. A GitHub run whose ref is a `v*` tag creates the formal Release and Docker manifests.

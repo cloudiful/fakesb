@@ -2,7 +2,7 @@
 
 [English](release.md)
 
-fakESB 使用唯一的 GitHub Actions workflow `.github/workflows/docker-publish.yml` 发布 Linux GNU、Windows x64、macOS arm64 二进制文件和多架构 Docker 镜像。
+fakESB 使用 GitHub Actions workflow `.github/workflows/docker-publish.yml` 发布 Linux GNU、Windows x64、macOS arm64 二进制文件和多架构 Docker 镜像；同时使用 Forgejo workflow `.forgejo/workflows/docker-publish.yml` 向 Forgejo 注册表发布 amd64 运行时镜像。
 
 ## 前置配置
 
@@ -41,6 +41,6 @@ workflow 会直接发布以下裸二进制文件：
 - `fakesb-v0.1.0-x86_64-pc-windows-msvc.exe`
 - `fakesb-v0.1.0-aarch64-apple-darwin`
 
-每个二进制文件都有对应的 `.sha256` 校验文件。Docker 镜像发布到 `ghcr.io/<owner>/<repository>`，同时生成版本 tag 和 `latest` tag；两个 tag 都是同时包含 `linux/amd64` 与 `linux/arm64` 的多架构 manifest。
+每个二进制文件都有对应的 `.sha256` 校验文件。GitHub Docker 镜像发布到 `ghcr.io/<owner>/<repository>`，同时生成版本 tag 和 `latest` tag；两个 tag 都是同时包含 `linux/amd64` 与 `linux/arm64` 的多架构 manifest。Forgejo 额外将 amd64 运行时镜像发布到 `forgejo.cloud1ful.com/<owner>/<repository>`，使用 `latest-amd64` 和 `v<version>-amd64` tag。
 
-从分支手动触发只构建并验证发布输入，不会发布。ref 为 `v*` 版本 tag 时，才会创建正式 Release 和 Docker manifest。
+GitHub 从分支手动触发只构建并验证发布输入，不会发布；ref 为 `v*` 版本 tag 时，才会创建正式 Release 和 Docker manifest。

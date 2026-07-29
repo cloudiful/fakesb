@@ -1,0 +1,69 @@
+name: Docker Publish
+run-name: Docker Publish by ${{ github.actor }}
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: aio
+    env:
+      CARGO_TERM_COLOR: always
+      SQLX_OFFLINE: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Reset Docker build input
+        shell: bash
+        run: rm -rf ci-image-input
+
+      - name: Build Rust artifacts
+        uses: https://forgejo.cloud1ful.com/actions/workflows/actions/build-rust-artifacts@v0.3.0
+        with:
+          working_directory: server
+          output_directory: ../ci-image-input
+          build_command: cargo build --release --bin fakESB
+          binary_mappings: >-
+            [{"source":"target/release/fakESB","destination":"app/bin/fakESB"}]
+
+      - name: Export OpenAPI
+        shell: bash
+        run: ci-image-input/app/bin/fakESB export-openapi > web/openapi.json
+
+      - name: Build frontend
+        working-directory: web
+        shell: bash
+        run: |
+          set -euo pipefail
+          bun install --no-save --minimum-release-age 604800
+          bunx openapi-typescript openapi.json -o types/api.generated.ts
+          bun run generate
+          test -f .output/public/index.html
+          mkdir -p ../ci-image-input/frontend-dist
+          cp -R .output/public/. ../ci-image-input/frontend-dist/
+
+      - name: Build and push Docker target with Buildx Bake
+        uses: https://forgejo.cloud1ful.com/actions/workflows/actions/publish-docker-targets@v0.2.0
+        with:
+          context: .
+          dockerfile: ./Dockerfile
+          platform: linux/amd64
+          targets: >-
+            [{"target":"prebuilt-runtime","image_suffix":""}]
+          builder_name_prefix: fakesb
+          inline_cache: "true"
+          inline_cache_tag: latest-amd64
+          username: ${{ github.actor }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
