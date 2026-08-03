@@ -9,6 +9,6 @@ export default {
     testRule: '规则测试', runTest: '执行测试', testNoMatch: '没有规则命中该请求', testWillProxy: '将代理到「{name}」',
     import: '导入', export: '导出', imported: '已导入 {targets} 个目标、{templates} 个模板、{rules} 条规则', warning: '提示',
     sequenceMode: '序列模式', sequenceModeHint: '按步骤依次返回，循环往复', sequenceSteps: '响应步骤', addStep: '添加步骤',
-    proxyTransformHint: '将用该模板改写上游响应（可使用 {{ resp.* }} 变量）',
+    proxyTransformHint: '将用该模板改写上游响应（可使用 \\{\\{ resp.* \\}\\} 变量）',
   },
 }

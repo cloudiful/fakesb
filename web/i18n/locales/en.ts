@@ -9,6 +9,6 @@ export default {
     testRule: 'Test rule', runTest: 'Run test', testNoMatch: 'No rule matched this request', testWillProxy: 'Would proxy to "{name}"',
     import: 'Import', export: 'Export', imported: 'Imported {targets} targets, {templates} templates, {rules} rules', warning: 'Warning',
     sequenceMode: 'Sequence mode', sequenceModeHint: 'Return each step in turn, then repeat', sequenceSteps: 'Response steps', addStep: 'Add step',
-    proxyTransformHint: 'The upstream response will be rewritten with this template ({{ resp.* }} variables available)',
+    proxyTransformHint: 'The upstream response will be rewritten with this template (\\{\\{ resp.* \\}\\} variables available)',
   },
 }
