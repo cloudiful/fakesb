@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select sequence_count\nfrom rules\nwhere id = $1\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "sequence_count",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "sequence_count"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "9a61a18130b8a73864ee34504d85dfe3f375d4db8eac77ffd5e5d9e94969cc18"
+}
