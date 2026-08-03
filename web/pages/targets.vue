@@ -10,10 +10,14 @@ type TargetForm = Omit<TargetPayload, 'note'> & {
 const { t } = useI18n()
 const api = useApi()
 const toast = useToast()
+const { exportConfig, importConfig } = useConfigIO()
+const fileInput = ref<HTMLInputElement | null>(null)
 const page = ref(1)
 const pageSize = 20
 const open = ref(false)
 const editingId = ref<number | null>(null)
+const deleteOpen = ref(false)
+const deleteTarget = ref<Target | null>(null)
 const form = reactive<TargetForm>({
   name: '',
   base_url: '',
@@ -65,15 +69,43 @@ async function save() {
     toast.add({ title: t('app.error'), description: String(cause), color: 'error' })
   }
 }
+
+function askDelete(row: Target) {
+  deleteTarget.value = row
+  deleteOpen.value = true
+}
+
+async function onImportChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (file) await importConfig(file, refresh)
+}
+
+async function remove() {
+  if (!deleteTarget.value) return
+  try {
+    await api.deleteTarget(deleteTarget.value.id)
+    deleteOpen.value = false
+    deleteTarget.value = null
+    await refresh()
+    toast.add({ title: t('app.deleted'), color: 'success' })
+  } catch (cause) {
+    toast.add({ title: t('app.error'), description: String(cause), color: 'error' })
+  }
+}
 </script>
 
 <template>
   <UPage>
     <UPageHeader :title="t('app.targets')">
       <template #right>
+        <UButton icon="i-mdi-import" color="neutral" variant="ghost" :label="t('app.import')" @click="fileInput?.click()" />
+        <UButton icon="i-mdi-export" color="neutral" variant="ghost" :label="t('app.export')" @click="exportConfig" />
         <UButton icon="i-mdi-plus" :label="t('app.create')" @click="resetForm(); open = true" />
       </template>
     </UPageHeader>
+    <input ref="fileInput" type="file" accept="application/json" class="hidden" @change="onImportChange">
 
     <UAlert v-if="error" color="error" :title="t('app.error')" class="mt-6" />
     <UTable :data="data?.items ?? []" :columns="columns" :loading="pending" class="mt-6">
@@ -82,6 +114,7 @@ async function save() {
       </template>
       <template #actions-cell="{ row }">
         <UButton icon="i-mdi-pencil" color="neutral" variant="ghost" :aria-label="t('app.edit')" @click="edit(row.original)" />
+        <UButton icon="i-mdi-delete" color="error" variant="ghost" :aria-label="t('app.delete')" @click="askDelete(row.original)" />
       </template>
     </UTable>
     <div class="mt-4 flex justify-end">
@@ -100,5 +133,12 @@ async function save() {
         </UForm>
       </template>
     </UModal>
+
+    <ConfirmDialog
+      v-model:open="deleteOpen"
+      :title="t('app.deleteConfirm')"
+      :description="deleteTarget ? t('app.deleteTargetConfirm', { name: deleteTarget.name }) : ''"
+      @confirm="remove"
+    />
   </UPage>
 </template>

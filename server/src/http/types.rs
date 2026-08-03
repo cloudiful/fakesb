@@ -5,7 +5,6 @@ use utoipa::{IntoParams, ToSchema};
 use crate::domain::{
     PaginationParams, RequestLog, ResponseTemplate, Rule, RuleAction, RuleMatcher, Target,
 };
-
 #[derive(Debug, Deserialize, IntoParams)]
 #[into_params(parameter_in = Query)]
 pub struct PagingQuery {
@@ -29,12 +28,21 @@ pub struct TargetPayload {
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
+pub struct SequenceStepPayload {
+    pub template_id: i64,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct RulePayload {
     pub matcher: RuleMatcher,
     pub target_id: Option<i64>,
     pub action: RuleAction,
     pub response_template_id: Option<i64>,
     pub priority: Option<i32>,
+    pub delay_ms: Option<i32>,
+    pub sequence_mode: Option<bool>,
+    #[serde(default)]
+    pub sequence_steps: Vec<SequenceStepPayload>,
     pub enabled: Option<bool>,
     pub note: Option<String>,
 }
@@ -49,6 +57,20 @@ pub struct TemplatePayload {
     pub headers: Option<serde_json::Value>,
     pub enabled: Option<bool>,
     pub note: Option<String>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct RuleTestPayload {
+    pub method: String,
+    pub path: String,
+    #[serde(default)]
+    pub query: std::collections::BTreeMap<String, Vec<String>>,
+    #[serde(default)]
+    pub headers: std::collections::BTreeMap<String, String>,
+    #[serde(default)]
+    pub content_type: Option<String>,
+    #[serde(default)]
+    pub body: Option<String>,
 }
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -109,6 +131,11 @@ pub struct TemplatePage {
 pub struct LogPage {
     pub items: Vec<RequestLog>,
     pub total: i64,
+}
+
+#[derive(Debug, serde::Serialize, ToSchema)]
+pub struct PurgeResponse {
+    pub deleted: i64,
 }
 
 fn normalize(value: Option<String>) -> Option<String> {

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "update rules\nset matcher = $2,\n    target_id = $3,\n    action = $4,\n    response_template_id = $5,\n    priority = $6,\n    enabled = $7,\n    note = $8,\n    updated_at = now()\nwhere id = $1\nreturning id\n",
+  "query": "update rules\nset matcher = $2,\n    target_id = $3,\n    action = $4,\n    response_template_id = $5,\n    delay_ms = $6,\n    sequence_mode = $7,\n    priority = $8,\n    enabled = $9,\n    note = $10,\n    updated_at = now()\nwhere id = $1\nreturning id\n",
   "describe": {
     "columns": [
       {
@@ -24,6 +24,8 @@
         "Int8",
         "Int4",
         "Bool",
+        "Int4",
+        "Bool",
         "Text"
       ]
     },
@@ -31,5 +33,5 @@
       false
     ]
   },
-  "hash": "1073a42927eb87c9f274b99a289d6995b603520cea9c66b2a495b926bd447388"
+  "hash": "46cba613f823fb28e7b396cc2a5eee6ced755c8e5373602f428ca7406a31a606"
 }

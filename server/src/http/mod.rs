@@ -17,14 +17,22 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .service(admin::targets::list)
         .service(admin::targets::create)
         .service(admin::targets::update)
+        .service(admin::targets::delete)
         .service(admin::rules::list)
         .service(admin::rules::create)
+        .service(admin::rules::test)
         .service(admin::rules::update)
+        .service(admin::rules::delete)
         .service(admin::templates::list)
         .service(admin::templates::create)
         .service(admin::templates::update)
+        .service(admin::templates::delete)
         .service(admin::logs::list)
         .service(admin::logs::detail)
+        .service(admin::logs::purge)
+        .service(admin::logs::delete)
+        .service(admin::config::export_config)
+        .service(admin::config::import_config)
         .default_service(web::route().to(dispatch));
 }
 
@@ -90,6 +98,7 @@ pub async fn dispatch(
 fn request_error(error: ServiceError, request: &HttpRequest) -> HttpResponse {
     let status = match &error {
         ServiceError::Parse(_) | ServiceError::Validation(_) => StatusCode::BAD_REQUEST,
+        ServiceError::Conflict(_) => StatusCode::CONFLICT,
         ServiceError::NoMatch => StatusCode::NOT_FOUND,
         ServiceError::Remote(_) => StatusCode::BAD_GATEWAY,
         ServiceError::Template(_) | ServiceError::Database(_) => StatusCode::INTERNAL_SERVER_ERROR,

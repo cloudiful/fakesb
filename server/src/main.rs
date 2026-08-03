@@ -6,6 +6,7 @@ mod openapi;
 mod repositories;
 mod service;
 mod template;
+mod xpath;
 
 use crate::app::bootstrap;
 use utoipa::OpenApi;

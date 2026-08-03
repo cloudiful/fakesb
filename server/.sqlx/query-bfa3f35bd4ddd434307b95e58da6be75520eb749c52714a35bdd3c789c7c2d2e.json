@@ -1,0 +1,35 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "insert into response_templates (name, content_type, raw_template, format, status_code, headers, enabled, note)\nvalues ($1, $2, $3, $4, $5, $6, $7, $8)\non conflict (name) do update\nset content_type = excluded.content_type,\n    raw_template = excluded.raw_template,\n    format = excluded.format,\n    status_code = excluded.status_code,\n    headers = excluded.headers,\n    enabled = excluded.enabled,\n    note = excluded.note,\n    updated_at = now()\nreturning id\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "response_templates",
+            "name": "id"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Int4",
+        "Jsonb",
+        "Bool",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "bfa3f35bd4ddd434307b95e58da6be75520eb749c52714a35bdd3c789c7c2d2e"
+}

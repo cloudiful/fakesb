@@ -7,6 +7,7 @@ pub fn service_error(error: ServiceError) -> HttpResponse {
         ServiceError::Validation(_) | ServiceError::Parse(_) => {
             actix_web::http::StatusCode::BAD_REQUEST
         }
+        ServiceError::Conflict(_) => actix_web::http::StatusCode::CONFLICT,
         ServiceError::Remote(_) => actix_web::http::StatusCode::BAD_GATEWAY,
         ServiceError::Template(_) | ServiceError::Database(_) => {
             actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
@@ -14,6 +15,14 @@ pub fn service_error(error: ServiceError) -> HttpResponse {
         ServiceError::NoMatch => actix_web::http::StatusCode::NOT_FOUND,
     };
     HttpResponse::build(status).json(serde_json::json!({"error": error.to_string()}))
+}
+
+pub fn deleted(result: Result<bool, ServiceError>) -> HttpResponse {
+    match result {
+        Ok(true) => HttpResponse::NoContent().finish(),
+        Ok(false) => HttpResponse::NotFound().finish(),
+        Err(error) => service_error(error),
+    }
 }
 
 pub fn created(id: Result<i64, ServiceError>) -> HttpResponse {

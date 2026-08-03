@@ -3,8 +3,10 @@ import type { RuleAction } from '~/types/api'
 
 const { t } = useI18n()
 const api = useApi()
+const toast = useToast()
 const page = ref(1)
 const pageSize = 20
+const purgeOpen = ref(false)
 const filters = reactive<{ method: string; path: string; action: '' | RuleAction; status_code?: number }>({ method: '', path: '', action: '', status_code: undefined })
 const query = computed(() => ({
   method: filters.method || undefined,
@@ -28,12 +30,26 @@ const columns = computed(() => [
 
 function formatDate(value: string) { return new Date(value).toLocaleString() }
 function clearFilters() { Object.assign(filters, { method: '', path: '', action: '', status_code: undefined }); page.value = 1 }
+async function purge() {
+  try {
+    const result = await api.purgeLogs(query.value)
+    purgeOpen.value = false
+    page.value = 1
+    await refresh()
+    toast.add({ title: t('app.purged', { count: result.deleted }), color: 'success' })
+  } catch (cause) {
+    toast.add({ title: t('app.error'), description: String(cause), color: 'error' })
+  }
+}
 </script>
 
 <template>
   <UPage>
     <UPageHeader :title="t('app.logs')">
-      <template #right><UButton icon="i-mdi-refresh" color="neutral" variant="ghost" :aria-label="t('app.refresh')" @click="refresh()" /></template>
+      <template #right>
+        <UButton icon="i-mdi-refresh" color="neutral" variant="ghost" :aria-label="t('app.refresh')" @click="refresh()" />
+        <UButton icon="i-mdi-trash-can" color="error" variant="ghost" :label="t('app.purge')" @click="purgeOpen = true" />
+      </template>
     </UPageHeader>
     <UCard class="mt-6">
       <div class="grid gap-3 md:grid-cols-4">
@@ -52,5 +68,12 @@ function clearFilters() { Object.assign(filters, { method: '', path: '', action:
       <template #latency_ms-cell="{ row }">{{ row.original.latency_ms ?? '-' }} ms</template>
     </UTable>
     <div class="mt-4 flex justify-end"><UPagination v-model:page="page" :page-count="pageSize" :total="data?.total ?? 0" /></div>
+
+    <ConfirmDialog
+      v-model:open="purgeOpen"
+      :title="t('app.purgeConfirm')"
+      :description="t('app.purgeConfirmDesc')"
+      @confirm="purge"
+    />
   </UPage>
 </template>

@@ -65,6 +65,8 @@ pub struct BodyMatcher {
     pub json_equal_to: Option<Value>,
     #[serde(default)]
     pub fields: BTreeMap<String, StringMatcher>,
+    #[serde(default)]
+    pub xpath: BTreeMap<String, StringMatcher>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
@@ -127,6 +129,16 @@ pub struct ResponseTemplate {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct SequenceStep {
+    pub id: i64,
+    pub rule_id: i64,
+    pub step_index: i32,
+    pub template_id: i64,
+    #[serde(default)]
+    pub template_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Rule {
     pub id: i64,
     pub matcher: RuleMatcher,
@@ -134,6 +146,10 @@ pub struct Rule {
     pub action: RuleAction,
     pub response_template_id: Option<i64>,
     pub priority: i32,
+    pub delay_ms: i32,
+    pub sequence_mode: bool,
+    #[serde(default)]
+    pub sequence_steps: Vec<SequenceStep>,
     pub enabled: bool,
     pub note: Option<String>,
     pub created_at: DateTime<Utc>,
@@ -210,6 +226,45 @@ pub struct MockResponse {
     pub headers: HeaderMap,
     pub raw_body: String,
     pub normalized_body: Option<Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct RenderedPreview {
+    pub status_code: u16,
+    pub content_type: String,
+    pub headers: Value,
+    pub raw_body: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct RuleTestResult {
+    pub matched: bool,
+    pub rule_id: Option<i64>,
+    pub action: Option<RuleAction>,
+    pub priority: Option<i32>,
+    pub target_id: Option<i64>,
+    pub target_name: Option<String>,
+    pub template_id: Option<i64>,
+    pub rendered: Option<RenderedPreview>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+pub struct ExportBundle {
+    #[serde(default)]
+    pub targets: Vec<Target>,
+    #[serde(default)]
+    pub templates: Vec<ResponseTemplate>,
+    #[serde(default)]
+    pub rules: Vec<Rule>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema)]
+pub struct ImportSummary {
+    pub targets_imported: i64,
+    pub templates_imported: i64,
+    pub rules_imported: i64,
+    #[serde(default)]
+    pub warnings: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy)]

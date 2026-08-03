@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "insert into rules(\n    matcher,\n    target_id,\n    action,\n    response_template_id,\n    priority,\n    enabled,\n    note\n)\nvalues ($1, $2, $3, $4, $5, $6, $7)\nreturning id\n",
+  "query": "insert into rules(\n    matcher,\n    target_id,\n    action,\n    response_template_id,\n    delay_ms,\n    sequence_mode,\n    priority,\n    enabled,\n    note\n)\nvalues ($1, $2, $3, $4, $5, $6, $7, $8, $9)\nreturning id\n",
   "describe": {
     "columns": [
       {
@@ -23,6 +23,8 @@
         "Int8",
         "Int4",
         "Bool",
+        "Int4",
+        "Bool",
         "Text"
       ]
     },
@@ -30,5 +32,5 @@
       false
     ]
   },
-  "hash": "4db1baf83b990ef308fcdf9dfb49873aec68dc6044229c5eb6b899216c99f6e4"
+  "hash": "de22477e852283c6f81d6ab3f5be150360aecf00238f975bb841893567cd51a5"
 }

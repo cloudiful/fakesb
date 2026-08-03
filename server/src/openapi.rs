@@ -8,18 +8,27 @@ use utoipa::OpenApi;
         crate::http::admin::targets::list,
         crate::http::admin::targets::create,
         crate::http::admin::targets::update,
+        crate::http::admin::targets::delete,
         crate::http::admin::rules::list,
         crate::http::admin::rules::create,
         crate::http::admin::rules::update,
+        crate::http::admin::rules::delete,
+        crate::http::admin::rules::test,
         crate::http::admin::templates::list,
         crate::http::admin::templates::create,
         crate::http::admin::templates::update,
+        crate::http::admin::templates::delete,
         crate::http::admin::logs::list,
-        crate::http::admin::logs::detail
+        crate::http::admin::logs::detail,
+        crate::http::admin::logs::purge,
+        crate::http::admin::logs::delete,
+        crate::http::admin::config::export_config,
+        crate::http::admin::config::import_config
     ),
     components(schemas(
         crate::domain::Target,
         crate::domain::Rule,
+        crate::domain::SequenceStep,
         crate::domain::RuleAction,
         crate::domain::RuleMatcher,
         crate::domain::StringMatcher,
@@ -30,12 +39,19 @@ use utoipa::OpenApi;
         crate::domain::LogDetail,
         crate::http::types::TargetPayload,
         crate::http::types::RulePayload,
+        crate::http::types::SequenceStepPayload,
+        crate::http::types::RuleTestPayload,
         crate::http::types::TemplatePayload,
         crate::http::types::IdResponse,
         crate::http::types::TargetPage,
         crate::http::types::RulePage,
         crate::http::types::TemplatePage,
-        crate::http::types::LogPage
+        crate::http::types::LogPage,
+        crate::http::types::PurgeResponse,
+        crate::domain::RuleTestResult,
+        crate::domain::RenderedPreview,
+        crate::domain::ExportBundle,
+        crate::domain::ImportSummary
     ))
 )]
 pub struct ApiDoc;

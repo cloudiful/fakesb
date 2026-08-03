@@ -10,6 +10,56 @@
     "version": "0.1.0"
   },
   "paths": {
+    "/api/export": {
+      "get": {
+        "tags": [
+          "crate::http::admin::config"
+        ],
+        "operationId": "exportConfig",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportBundle"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/import": {
+      "post": {
+        "tags": [
+          "crate::http::admin::config"
+        ],
+        "operationId": "importConfig",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportBundle"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportSummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/logs": {
       "get": {
         "tags": [
@@ -99,6 +149,95 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "crate::http::admin::logs"
+        ],
+        "operationId": "purgeLogs",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "method",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RuleAction"
+            }
+          },
+          {
+            "name": "status_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "start_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "end_time",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurgeResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/logs/{id}": {
@@ -128,6 +267,31 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "crate::http::admin::logs"
+        ],
+        "operationId": "deleteLog",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
           },
           "404": {
             "description": ""
@@ -216,6 +380,36 @@
         }
       }
     },
+    "/api/rules/test": {
+      "post": {
+        "tags": [
+          "crate::http::admin::rules"
+        ],
+        "operationId": "testRule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleTestPayload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleTestResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/rules/{id}": {
       "put": {
         "tags": [
@@ -253,6 +447,31 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": ""
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "crate::http::admin::rules"
+        ],
+        "operationId": "deleteRule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
           },
           "404": {
             "description": ""
@@ -370,6 +589,34 @@
             "description": ""
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "crate::http::admin::targets"
+        ],
+        "operationId": "deleteTarget",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        }
       }
     },
     "/api/templates": {
@@ -482,6 +729,34 @@
             "description": ""
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "crate::http::admin::templates"
+        ],
+        "operationId": "deleteTemplate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": ""
+          }
+        }
       }
     },
     "/healthz": {
@@ -544,6 +819,38 @@
               "string",
               "null"
             ]
+          },
+          "xpath": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StringMatcher"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ExportBundle": {
+        "type": "object",
+        "properties": {
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Rule"
+            }
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Target"
+            }
+          },
+          "templates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponseTemplate"
+            }
           }
         }
       },
@@ -556,6 +863,34 @@
           "id": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "ImportSummary": {
+        "type": "object",
+        "required": [
+          "targets_imported",
+          "templates_imported",
+          "rules_imported"
+        ],
+        "properties": {
+          "rules_imported": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "targets_imported": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "templates_imported": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -618,6 +953,41 @@
           "normalized_json": {},
           "raw_body": {
             "type": "string"
+          }
+        }
+      },
+      "PurgeResponse": {
+        "type": "object",
+        "required": [
+          "deleted"
+        ],
+        "properties": {
+          "deleted": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "RenderedPreview": {
+        "type": "object",
+        "required": [
+          "status_code",
+          "content_type",
+          "headers",
+          "raw_body"
+        ],
+        "properties": {
+          "content_type": {
+            "type": "string"
+          },
+          "headers": {},
+          "raw_body": {
+            "type": "string"
+          },
+          "status_code": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
           }
         }
       },
@@ -774,6 +1144,8 @@
           "matcher",
           "action",
           "priority",
+          "delay_ms",
+          "sequence_mode",
           "enabled",
           "created_at",
           "updated_at"
@@ -785,6 +1157,10 @@
           "created_at": {
             "type": "string",
             "format": "date-time"
+          },
+          "delay_ms": {
+            "type": "integer",
+            "format": "int32"
           },
           "enabled": {
             "type": "boolean"
@@ -812,6 +1188,15 @@
               "null"
             ],
             "format": "int64"
+          },
+          "sequence_mode": {
+            "type": "boolean"
+          },
+          "sequence_steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SequenceStep"
+            }
           },
           "target_id": {
             "type": [
@@ -913,6 +1298,13 @@
           "action": {
             "$ref": "#/components/schemas/RuleAction"
           },
+          "delay_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
           "enabled": {
             "type": [
               "boolean",
@@ -942,11 +1334,181 @@
             ],
             "format": "int64"
           },
+          "sequence_mode": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "sequence_steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SequenceStepPayload"
+            }
+          },
           "target_id": {
             "type": [
               "integer",
               "null"
             ],
+            "format": "int64"
+          }
+        }
+      },
+      "RuleTestPayload": {
+        "type": "object",
+        "required": [
+          "method",
+          "path"
+        ],
+        "properties": {
+          "body": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "content_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "headers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "method": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "query": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "RuleTestResult": {
+        "type": "object",
+        "required": [
+          "matched"
+        ],
+        "properties": {
+          "action": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RuleAction"
+              }
+            ]
+          },
+          "matched": {
+            "type": "boolean"
+          },
+          "priority": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "rendered": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/RenderedPreview"
+              }
+            ]
+          },
+          "rule_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "target_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "target_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "template_id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "SequenceStep": {
+        "type": "object",
+        "required": [
+          "id",
+          "rule_id",
+          "step_index",
+          "template_id"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rule_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "step_index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "template_id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "template_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SequenceStepPayload": {
+        "type": "object",
+        "required": [
+          "template_id"
+        ],
+        "properties": {
+          "template_id": {
+            "type": "integer",
             "format": "int64"
           }
         }

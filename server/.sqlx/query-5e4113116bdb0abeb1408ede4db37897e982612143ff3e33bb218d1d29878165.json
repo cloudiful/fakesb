@@ -1,0 +1,76 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "select s.id,\n       s.rule_id,\n       s.step_index,\n       s.template_id,\n       t.name as template_name\nfrom rule_sequence_steps s\njoin response_templates t on t.id = s.template_id\nwhere s.rule_id = any($1)\norder by s.rule_id asc, s.step_index asc\n",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rule_sequence_steps",
+            "name": "id"
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "rule_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rule_sequence_steps",
+            "name": "rule_id"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "step_index",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rule_sequence_steps",
+            "name": "step_index"
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "template_id",
+        "type_info": "Int8",
+        "origin": {
+          "Table": {
+            "table": "rule_sequence_steps",
+            "name": "template_id"
+          }
+        }
+      },
+      {
+        "ordinal": 4,
+        "name": "template_name",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "response_templates",
+            "name": "name"
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8Array"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "5e4113116bdb0abeb1408ede4db37897e982612143ff3e33bb218d1d29878165"
+}

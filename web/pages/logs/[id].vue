@@ -2,16 +2,30 @@
 const { t } = useI18n()
 const route = useRoute()
 const api = useApi()
+const toast = useToast()
 const id = computed(() => Number(route.params.id))
+const deleteOpen = ref(false)
 const { data, pending, error } = await useAsyncData(`log-${id.value}`, () => api.getLog(id.value))
 
 function formatDate(value?: string | null) { return value ? new Date(value).toLocaleString() : '-' }
+async function remove() {
+  try {
+    await api.deleteLog(id.value)
+    await navigateTo('/logs')
+    toast.add({ title: t('app.deleted'), color: 'success' })
+  } catch (cause) {
+    toast.add({ title: t('app.error'), description: String(cause), color: 'error' })
+  }
+}
 </script>
 
 <template>
   <UPage>
     <UPageHeader :title="`${t('app.logs')} #${id}`">
-      <template #right><UButton to="/logs" icon="i-mdi-arrow-left" color="neutral" variant="ghost" /></template>
+      <template #right>
+        <UButton to="/logs" icon="i-mdi-arrow-left" color="neutral" variant="ghost" />
+        <UButton icon="i-mdi-delete" color="error" variant="ghost" :aria-label="t('app.delete')" @click="deleteOpen = true" />
+      </template>
     </UPageHeader>
     <UAlert v-if="error" color="error" :title="t('app.error')" class="mt-6" />
     <USkeleton v-else-if="pending" class="mt-6 h-32" />
@@ -31,5 +45,7 @@ function formatDate(value?: string | null) { return value ? new Date(value).toLo
         </UCard>
       </div>
     </template>
+
+    <ConfirmDialog v-model:open="deleteOpen" :title="t('app.deleteConfirm')" :description="t('app.deleteLogConfirm')" @confirm="remove" />
   </UPage>
 </template>

@@ -31,9 +31,29 @@ pub async fn dispatch(
         }
     };
     let target_id = rule.target_id.or(services.default_target_id());
+    if rule.delay_ms > 0 {
+        tokio::time::sleep(std::time::Duration::from_millis(rule.delay_ms as u64)).await;
+    }
     let result = match rule.action {
-        RuleAction::Proxy => passthrough::execute(services, request, target_id).await,
-        RuleAction::Static => mock::render(services, request, rule.response_template_id).await,
+        RuleAction::Proxy => {
+            let response = passthrough::execute(services, request, target_id).await;
+            match response {
+                Ok(response) if rule.response_template_id.is_some() => {
+                    mock::render_from_response(
+                        services,
+                        request,
+                        rule.response_template_id,
+                        &response,
+                    )
+                    .await
+                }
+                other => other,
+            }
+        }
+        RuleAction::Static => {
+            let template_id = select_template(services, &rule).await?;
+            mock::render(services, request, template_id).await
+        }
     };
 
     match result {
@@ -66,7 +86,22 @@ pub async fn dispatch(
     }
 }
 
-async fn find_rule(
+pub(super) async fn preview_template_id(
+    services: &AppServices,
+    rule: &Rule,
+) -> Result<Option<i64>, ServiceError> {
+    if rule.sequence_mode && !rule.sequence_steps.is_empty() {
+        let count = repositories::sequences::current_count(services.pool(), rule.id)
+            .await?
+            .ok_or_else(|| ServiceError::Database("sequence rule no longer exists".into()))?;
+        let index = (count % rule.sequence_steps.len() as i64) as usize;
+        Ok(Some(rule.sequence_steps[index].template_id))
+    } else {
+        Ok(rule.response_template_id)
+    }
+}
+
+pub(super) async fn find_rule(
     services: &AppServices,
     request: &MockRequest,
 ) -> Result<Option<Rule>, ServiceError> {
@@ -89,6 +124,17 @@ fn sort_rules(rules: &mut [Rule]) {
     });
 }
 
+async fn select_template(services: &AppServices, rule: &Rule) -> Result<Option<i64>, ServiceError> {
+    if rule.sequence_mode && !rule.sequence_steps.is_empty() {
+        let steps = &rule.sequence_steps;
+        let count = repositories::sequences::next_count(services.pool(), rule.id).await?;
+        let index = ((count - 1) % steps.len() as i64) as usize;
+        Ok(Some(steps[index].template_id))
+    } else {
+        Ok(rule.response_template_id)
+    }
+}
+
 fn elapsed_ms(started: Instant) -> i64 {
     started.elapsed().as_millis() as i64
 }
@@ -109,6 +155,9 @@ mod tests {
             action: RuleAction::Static,
             response_template_id: None,
             priority,
+            delay_ms: 0,
+            sequence_mode: false,
+            sequence_steps: Vec::new(),
             enabled: true,
             note: None,
             created_at: now,

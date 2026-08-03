@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "delete from response_templates\nwhere id = $1\n",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "642dcb6b66da1f3efd5a913c82cb0b2887ea68997b5416ab0d0fb8e3ef7fc1a3"
+}

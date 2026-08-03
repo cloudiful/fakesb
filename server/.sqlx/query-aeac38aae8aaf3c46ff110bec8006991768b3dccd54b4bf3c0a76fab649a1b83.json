@@ -1,77 +1,82 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select count(*) over () as \"total!\",\n       id,\n       matcher,\n       target_id,\n       action,\n       response_template_id,\n       priority,\n       enabled,\n       note,\n       created_at,\n       updated_at\nfrom rules\norder by priority desc, id asc\nlimit $1 offset $2\n",
+  "query": "select id,\n       name,\n       content_type,\n       raw_template,\n       format,\n       status_code,\n       headers,\n       enabled,\n       note,\n       created_at,\n       updated_at\nfrom response_templates\norder by id asc\n",
   "describe": {
     "columns": [
       {
         "ordinal": 0,
-        "name": "total!",
-        "type_info": "Int8",
-        "origin": "Expression"
-      },
-      {
-        "ordinal": 1,
         "name": "id",
         "type_info": "Int8",
         "origin": {
           "Table": {
-            "table": "rules",
+            "table": "response_templates",
             "name": "id"
           }
         }
       },
       {
-        "ordinal": 2,
-        "name": "matcher",
-        "type_info": "Jsonb",
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "rules",
-            "name": "matcher"
+            "table": "response_templates",
+            "name": "name"
+          }
+        }
+      },
+      {
+        "ordinal": 2,
+        "name": "content_type",
+        "type_info": "Text",
+        "origin": {
+          "Table": {
+            "table": "response_templates",
+            "name": "content_type"
           }
         }
       },
       {
         "ordinal": 3,
-        "name": "target_id",
-        "type_info": "Int8",
+        "name": "raw_template",
+        "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "rules",
-            "name": "target_id"
+            "table": "response_templates",
+            "name": "raw_template"
           }
         }
       },
       {
         "ordinal": 4,
-        "name": "action",
+        "name": "format",
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "rules",
-            "name": "action"
+            "table": "response_templates",
+            "name": "format"
           }
         }
       },
       {
         "ordinal": 5,
-        "name": "response_template_id",
-        "type_info": "Int8",
+        "name": "status_code",
+        "type_info": "Int4",
         "origin": {
           "Table": {
-            "table": "rules",
-            "name": "response_template_id"
+            "table": "response_templates",
+            "name": "status_code"
           }
         }
       },
       {
         "ordinal": 6,
-        "name": "priority",
-        "type_info": "Int4",
+        "name": "headers",
+        "type_info": "Jsonb",
         "origin": {
           "Table": {
-            "table": "rules",
-            "name": "priority"
+            "table": "response_templates",
+            "name": "headers"
           }
         }
       },
@@ -81,7 +86,7 @@
         "type_info": "Bool",
         "origin": {
           "Table": {
-            "table": "rules",
+            "table": "response_templates",
             "name": "enabled"
           }
         }
@@ -92,7 +97,7 @@
         "type_info": "Text",
         "origin": {
           "Table": {
-            "table": "rules",
+            "table": "response_templates",
             "name": "note"
           }
         }
@@ -103,7 +108,7 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "rules",
+            "table": "response_templates",
             "name": "created_at"
           }
         }
@@ -114,25 +119,22 @@
         "type_info": "Timestamptz",
         "origin": {
           "Table": {
-            "table": "rules",
+            "table": "response_templates",
             "name": "updated_at"
           }
         }
       }
     ],
     "parameters": {
-      "Left": [
-        "Int8",
-        "Int8"
-      ]
+      "Left": []
     },
     "nullable": [
-      null,
       false,
       false,
-      true,
       false,
-      true,
+      false,
+      false,
+      false,
       false,
       false,
       true,
@@ -140,5 +142,5 @@
       false
     ]
   },
-  "hash": "b7675f3155d1cc1067b32c2fe1612a5b1693c64d1aa8cdf99663d9f89f9f9176"
+  "hash": "aeac38aae8aaf3c46ff110bec8006991768b3dccd54b4bf3c0a76fab649a1b83"
 }

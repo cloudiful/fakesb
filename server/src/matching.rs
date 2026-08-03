@@ -116,6 +116,7 @@ fn validate_body(body: &BodyMatcher) -> Result<(), ServiceError> {
         body.matches.is_some(),
         body.json_equal_to.is_some(),
         !body.fields.is_empty(),
+        !body.xpath.is_empty(),
     ]
     .into_iter()
     .filter(|present| *present)
@@ -135,12 +136,21 @@ fn validate_body(body: &BodyMatcher) -> Result<(), ServiceError> {
             "field matchers require a JSON or XML body matcher".into(),
         ));
     }
+    if body.format != BodyFormat::Xml && !body.xpath.is_empty() {
+        return Err(ServiceError::Validation(
+            "xpath matchers require an XML body matcher".into(),
+        ));
+    }
     if let Some(pattern) = &body.matches {
         Regex::new(pattern)
             .map_err(|error| ServiceError::Validation(format!("invalid body regex: {error}")))?;
     }
     for (path, matcher) in &body.fields {
         validate_string_matcher(path, matcher)?;
+    }
+    for (expression, matcher) in &body.xpath {
+        crate::xpath::XPath::parse(expression).map_err(ServiceError::Validation)?;
+        validate_string_matcher(expression, matcher)?;
     }
     Ok(())
 }
@@ -171,6 +181,25 @@ fn body_matches(body: &BodyMatcher, request: &MockRequest) -> Result<bool, Servi
     };
     if let Some(expected) = &body.json_equal_to {
         return Ok(normalized == expected);
+    }
+    if !body.xpath.is_empty() {
+        for (expression, expected) in &body.xpath {
+            let expression =
+                crate::xpath::XPath::parse(expression).map_err(ServiceError::Validation)?;
+            let values = expression
+                .evaluate(&request.raw_body)
+                .map_err(ServiceError::Validation)?;
+            let matched = values
+                .iter()
+                .map(|value| string_matches(expected, value))
+                .collect::<Result<Vec<_>, ServiceError>>()?
+                .into_iter()
+                .any(|matched| matched);
+            if !matched {
+                return Ok(false);
+            }
+        }
+        return Ok(true);
     }
     for (path, expected) in &body.fields {
         let Some(value) = value_at_path(normalized, path) else {
@@ -375,5 +404,59 @@ mod tests {
         };
 
         assert!(validate(&matcher).is_err());
+    }
+
+    #[test]
+    fn matches_xml_fields_with_xpath() {
+        let raw_body = "<order version=\"2\"><items><item><id>7</id></item></items></order>";
+        let request = MockRequest {
+            method: "POST".into(),
+            path: "/orders".into(),
+            query: BTreeMap::new(),
+            query_string: String::new(),
+            headers: BTreeMap::new(),
+            content_type: Some("application/xml".into()),
+            body_format: BodyFormat::Xml,
+            raw_body: raw_body.into(),
+            normalized_body: Some(xml::convert::to_json(raw_body).unwrap()),
+        };
+        let matcher = RuleMatcher {
+            body: Some(BodyMatcher {
+                format: BodyFormat::Xml,
+                xpath: BTreeMap::from([
+                    (
+                        "/order/@version".into(),
+                        StringMatcher {
+                            equal_to: Some("2".into()),
+                            ..Default::default()
+                        },
+                    ),
+                    (
+                        "//item/id".into(),
+                        StringMatcher {
+                            equal_to: Some("7".into()),
+                            ..Default::default()
+                        },
+                    ),
+                ]),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+
+        validate(&matcher).unwrap();
+        assert!(matches(&matcher, &request).unwrap());
+
+        let mut missing = matcher.clone();
+        if let Some(body) = missing.body.as_mut() {
+            body.xpath.insert(
+                "/order/@version".into(),
+                StringMatcher {
+                    equal_to: Some("9".into()),
+                    ..Default::default()
+                },
+            );
+        }
+        assert!(!matches(&missing, &request).unwrap());
     }
 }

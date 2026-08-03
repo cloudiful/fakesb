@@ -17,14 +17,35 @@ pub fn parse_request(
         .get(CONTENT_TYPE)
         .and_then(|value| value.to_str().ok())
         .map(ToOwned::to_owned);
-    let body_format = response::body_format(content_type.as_deref());
+    let query = parse_query(query_string);
     let raw_body = String::from_utf8(raw_body.to_vec())
         .map_err(|error| ServiceError::Parse(format!("request body must be UTF-8: {error}")))?;
+    from_parts(
+        method,
+        path,
+        query,
+        query_string,
+        parse_headers(headers),
+        content_type,
+        &raw_body,
+    )
+}
+
+pub fn from_parts(
+    method: &str,
+    path: &str,
+    query: BTreeMap<String, Vec<String>>,
+    query_string: &str,
+    headers: RequestHeaders,
+    content_type: Option<String>,
+    raw_body: &str,
+) -> Result<MockRequest, ServiceError> {
+    let body_format = response::body_format(content_type.as_deref());
     let normalized_body = match body_format {
-        BodyFormat::Json => serde_json::from_str::<Value>(&raw_body)
+        BodyFormat::Json => serde_json::from_str::<Value>(raw_body)
             .map(Some)
             .map_err(|error| ServiceError::Parse(format!("invalid JSON request body: {error}")))?,
-        BodyFormat::Xml => xml::convert::to_json(&raw_body)
+        BodyFormat::Xml => xml::convert::to_json(raw_body)
             .map(Some)
             .map_err(|error| ServiceError::Parse(format!("invalid XML request body: {error}")))?,
         BodyFormat::Text => None,
@@ -37,12 +58,12 @@ pub fn parse_request(
         } else {
             path.into()
         },
-        query: parse_query(query_string),
+        query,
         query_string: query_string.into(),
-        headers: parse_headers(headers),
+        headers,
         content_type,
         body_format,
-        raw_body,
+        raw_body: raw_body.into(),
         normalized_body,
     })
 }
@@ -68,6 +89,21 @@ fn parse_query(query: &str) -> BTreeMap<String, Vec<String>> {
             .push(value.into_owned());
     }
     values.into_iter().collect()
+}
+
+pub fn query_string(map: &BTreeMap<String, Vec<String>>) -> String {
+    map.iter()
+        .flat_map(|(name, values)| {
+            values.iter().map(move |value| {
+                let name =
+                    url::form_urlencoded::byte_serialize(name.as_bytes()).collect::<String>();
+                let value =
+                    url::form_urlencoded::byte_serialize(value.as_bytes()).collect::<String>();
+                format!("{name}={value}")
+            })
+        })
+        .collect::<Vec<_>>()
+        .join("&")
 }
 
 #[cfg(test)]

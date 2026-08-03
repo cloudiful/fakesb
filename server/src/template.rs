@@ -3,13 +3,31 @@ use regex::Regex;
 use serde_json::Value;
 use uuid::Uuid;
 
-use crate::domain::{MockRequest, value_at_path};
+use crate::domain::{MockRequest, MockResponse, value_at_path};
 use crate::service::ServiceError;
 
 pub fn render_for_format(
     raw_template: &str,
     format: &str,
     request: &MockRequest,
+) -> Result<String, ServiceError> {
+    render(raw_template, format, request, None)
+}
+
+pub fn render_for_response(
+    raw_template: &str,
+    format: &str,
+    request: &MockRequest,
+    response: &MockResponse,
+) -> Result<String, ServiceError> {
+    render(raw_template, format, request, Some(response))
+}
+
+fn render(
+    raw_template: &str,
+    format: &str,
+    request: &MockRequest,
+    response: Option<&MockResponse>,
 ) -> Result<String, ServiceError> {
     let re = Regex::new(r"\{\{\s*(?P<expr>.*?)\s*\}\}")
         .map_err(|err| ServiceError::Template(err.to_string()))?;
@@ -24,7 +42,7 @@ pub fn render_for_format(
             .map(|value| value.as_str())
             .unwrap_or_default()
             .trim();
-        let value = resolve_value(expr, request)?;
+        let value = resolve_value(expr, request, response)?;
         rendered.push_str(&format_value(raw_template, matched.start(), format, &value));
         last = matched.end();
     }
@@ -32,7 +50,11 @@ pub fn render_for_format(
     Ok(rendered)
 }
 
-fn resolve_value(expr: &str, request: &MockRequest) -> Result<Value, ServiceError> {
+fn resolve_value(
+    expr: &str,
+    request: &MockRequest,
+    response: Option<&MockResponse>,
+) -> Result<Value, ServiceError> {
     if expr == "now" {
         return Ok(Value::String(Utc::now().to_rfc3339()));
     }
@@ -53,6 +75,9 @@ fn resolve_value(expr: &str, request: &MockRequest) -> Result<Value, ServiceErro
     }
     if let Some(path_expr) = expr.strip_prefix("req.") {
         return resolve_request_value(path_expr, request);
+    }
+    if let Some(path_expr) = expr.strip_prefix("resp.") {
+        return resolve_response_value(path_expr, response);
     }
     Err(ServiceError::Template(format!(
         "unsupported template expression: {expr}"
@@ -109,6 +134,50 @@ fn default_or_error(default_value: Option<String>, path: &str) -> Result<Value, 
             ))
         })
         .map(Value::String)
+}
+
+fn resolve_response_value(
+    path_expr: &str,
+    response: Option<&MockResponse>,
+) -> Result<Value, ServiceError> {
+    let response = response.ok_or_else(|| {
+        ServiceError::Template("resp.* cannot be used without an upstream response".into())
+    })?;
+    let (path, default_value) = if let Some((path, fallback)) = path_expr.split_once("|default:") {
+        (path, Some(strip_quoted(fallback.trim())))
+    } else {
+        (path_expr, None)
+    };
+
+    let value = if path == "status" {
+        Some(Value::Number(response.status_code.into()))
+    } else if let Some(header_name) = path.strip_prefix("headers.") {
+        response
+            .headers
+            .iter()
+            .find(|(name, _)| name.eq_ignore_ascii_case(header_name))
+            .map(|(_, value)| Value::String(value.clone()))
+    } else if let Some(body_path) = path.strip_prefix("body") {
+        let body_path = body_path.trim_start_matches('.');
+        if body_path.is_empty() {
+            response
+                .normalized_body
+                .clone()
+                .or_else(|| Some(Value::String(response.raw_body.clone())))
+        } else {
+            response
+                .normalized_body
+                .as_ref()
+                .and_then(|body| value_at_path(body, body_path).cloned())
+        }
+    } else {
+        None
+    };
+
+    match value {
+        Some(Value::Null) | None => default_or_error(default_value, path),
+        Some(value) => Ok(value),
+    }
 }
 
 fn format_value(template: &str, start: usize, format: &str, value: &Value) -> String {
@@ -254,5 +323,46 @@ mod tests {
             .expect("XML template should render");
 
         assert_eq!(result, "<name>Ada &amp; &lt;Lovelace&gt;</name>");
+    }
+
+    #[test]
+    fn renders_upstream_response_values() {
+        use super::render_for_response;
+        use crate::domain::MockResponse;
+
+        let response = MockResponse {
+            status_code: 201,
+            content_type: "application/json".into(),
+            headers: BTreeMap::from([(String::from("x-correlation"), String::from("c1"))]),
+            raw_body: r#"{"order":{"id":9}}"#.into(),
+            normalized_body: Some(serde_json::json!({"order": {"id": 9}})),
+        };
+        let result = render_for_response(
+            "{{ resp.status }} {{ resp.headers.X-Correlation }} {{ resp.body.order.id }}",
+            "text",
+            &request(),
+            &response,
+        )
+        .expect("template should render");
+
+        assert_eq!(result, "201 c1 9");
+    }
+
+    #[test]
+    fn renders_raw_text_from_upstream_response() {
+        use super::render_for_response;
+        use crate::domain::MockResponse;
+
+        let response = MockResponse {
+            status_code: 200,
+            content_type: "text/plain".into(),
+            headers: BTreeMap::new(),
+            raw_body: "upstream text".into(),
+            normalized_body: None,
+        };
+        let result = render_for_response("{{ resp.body }}", "text", &request(), &response)
+            .expect("text response should render");
+
+        assert_eq!(result, "upstream text");
     }
 }

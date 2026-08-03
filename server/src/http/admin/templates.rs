@@ -1,7 +1,7 @@
-use actix_web::{HttpResponse, get, post, put, web};
+use actix_web::{HttpResponse, delete, get, post, put, web};
 
 use crate::app::AppState;
-use crate::http::error::{created, service_error, updated};
+use crate::http::error::{created, deleted, service_error, updated};
 use crate::http::types::{IdResponse, PagingQuery, TemplatePage, TemplatePayload};
 
 #[utoipa::path(get, operation_id = "listTemplates", path = "/api/templates", params(PagingQuery), responses((status = 200, body = TemplatePage)))]
@@ -69,4 +69,10 @@ pub async fn update(
             )
             .await,
     )
+}
+
+#[utoipa::path(delete, operation_id = "deleteTemplate", path = "/api/templates/{id}", params(("id" = i64, Path)), responses((status = 204), (status = 404), (status = 409)))]
+#[delete("/api/templates/{id}")]
+pub async fn delete(id: web::Path<i64>, state: web::Data<AppState>) -> HttpResponse {
+    deleted(state.services.delete_template(id.into_inner()).await)
 }

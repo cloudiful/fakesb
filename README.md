@@ -10,9 +10,18 @@ Configurable HTTP mock and proxy for JSON, XML, and text requests.
 
 ## Features
 
-- Match any HTTP method and path with query, header, and body matchers.
-- Return templated responses or proxy requests to configured targets.
-- Store request and response snapshots in PostgreSQL.
+- Match any HTTP method and path with query, header, and body matchers
+  (JSON field paths and XML XPath expressions).
+- Return templated responses (`{{ req.* }}`, `{{ resp.* }}`, `{{ now }}`,
+  `{{ uuid }}`, …) or proxy requests to configured targets, optionally
+  rewriting upstream responses with a template.
+- Simulate latency and stateful sequences: rules can delay responses or
+  return a scripted series of steps in order.
+- Store request and response snapshots in PostgreSQL with filtering,
+  single deletion, and bulk purge.
+- Dry-run rule matching from the web console before sending traffic.
+- Import and export the whole configuration (targets, rules, templates)
+  as JSON for sharing between environments.
 - Manage targets, rules, templates, and logs through a static web console.
 
 ## Docker

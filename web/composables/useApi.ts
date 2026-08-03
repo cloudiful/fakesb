@@ -30,17 +30,27 @@ export function useApi() {
       unwrap(client.POST('/api/targets', { body })),
     updateTarget: (id: number, body: operations['updateTarget']['requestBody']['content']['application/json']) =>
       unwrap(client.PUT('/api/targets/{id}', { params: { path: { id } }, body })),
+    deleteTarget: (id: number) => unwrap(client.DELETE('/api/targets/{id}', { params: { path: { id } } })),
     listRules: (params?: RuleQuery) => unwrap(client.GET('/api/rules', { params: { query: params } })),
     createRule: (body: operations['createRule']['requestBody']['content']['application/json']) =>
       unwrap(client.POST('/api/rules', { body })),
+    testRule: (body: operations['testRule']['requestBody']['content']['application/json']) =>
+      unwrap(client.POST('/api/rules/test', { body })),
     updateRule: (id: number, body: operations['updateRule']['requestBody']['content']['application/json']) =>
       unwrap(client.PUT('/api/rules/{id}', { params: { path: { id } }, body })),
+    deleteRule: (id: number) => unwrap(client.DELETE('/api/rules/{id}', { params: { path: { id } } })),
     listTemplates: (params?: TemplateQuery) => unwrap(client.GET('/api/templates', { params: { query: params } })),
     createTemplate: (body: operations['createTemplate']['requestBody']['content']['application/json']) =>
       unwrap(client.POST('/api/templates', { body })),
     updateTemplate: (id: number, body: operations['updateTemplate']['requestBody']['content']['application/json']) =>
       unwrap(client.PUT('/api/templates/{id}', { params: { path: { id } }, body })),
+    deleteTemplate: (id: number) => unwrap(client.DELETE('/api/templates/{id}', { params: { path: { id } } })),
     listLogs: (params?: LogQuery) => unwrap(client.GET('/api/logs', { params: { query: params } })),
     getLog: (id: number) => unwrap(client.GET('/api/logs/{id}', { params: { path: { id } } })),
+    deleteLog: (id: number) => unwrap(client.DELETE('/api/logs/{id}', { params: { path: { id } } })),
+    purgeLogs: (params?: LogQuery) => unwrap(client.DELETE('/api/logs', { params: { query: params } })),
+    exportConfig: () => unwrap(client.GET('/api/export')),
+    importConfig: (body: operations['importConfig']['requestBody']['content']['application/json']) =>
+      unwrap(client.POST('/api/import', { body })),
   }
 }

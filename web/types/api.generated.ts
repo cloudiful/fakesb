@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/api/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["exportConfig"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["importConfig"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/logs": {
         parameters: {
             query?: never;
@@ -14,7 +46,7 @@ export interface paths {
         get: operations["listLogs"];
         put?: never;
         post?: never;
-        delete?: never;
+        delete: operations["purgeLogs"];
         options?: never;
         head?: never;
         patch?: never;
@@ -30,7 +62,7 @@ export interface paths {
         get: operations["getLog"];
         put?: never;
         post?: never;
-        delete?: never;
+        delete: operations["deleteLog"];
         options?: never;
         head?: never;
         patch?: never;
@@ -68,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/rules/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["testRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/rules/{id}": {
         parameters: {
             query?: never;
@@ -78,7 +126,7 @@ export interface paths {
         get?: never;
         put: operations["updateRule"];
         post?: never;
-        delete?: never;
+        delete: operations["deleteRule"];
         options?: never;
         head?: never;
         patch?: never;
@@ -110,7 +158,7 @@ export interface paths {
         get?: never;
         put: operations["updateTarget"];
         post?: never;
-        delete?: never;
+        delete: operations["deleteTarget"];
         options?: never;
         head?: never;
         patch?: never;
@@ -142,7 +190,7 @@ export interface paths {
         get?: never;
         put: operations["updateTemplate"];
         post?: never;
-        delete?: never;
+        delete: operations["deleteTemplate"];
         options?: never;
         head?: never;
         patch?: never;
@@ -179,10 +227,27 @@ export interface components {
             format: components["schemas"]["BodyFormat"];
             json_equal_to?: unknown;
             matches?: string | null;
+            xpath?: {
+                [key: string]: components["schemas"]["StringMatcher"];
+            };
+        };
+        ExportBundle: {
+            rules?: components["schemas"]["Rule"][];
+            targets?: components["schemas"]["Target"][];
+            templates?: components["schemas"]["ResponseTemplate"][];
         };
         IdResponse: {
             /** Format: int64 */
             id: number;
+        };
+        ImportSummary: {
+            /** Format: int64 */
+            rules_imported: number;
+            /** Format: int64 */
+            targets_imported: number;
+            /** Format: int64 */
+            templates_imported: number;
+            warnings?: string[];
         };
         LogDetail: components["schemas"]["RequestLog"] & {
             snapshots: components["schemas"]["MessageSnapshot"][];
@@ -198,6 +263,17 @@ export interface components {
             kind: components["schemas"]["SnapshotKind"];
             normalized_json: unknown;
             raw_body: string;
+        };
+        PurgeResponse: {
+            /** Format: int64 */
+            deleted: number;
+        };
+        RenderedPreview: {
+            content_type: string;
+            headers: unknown;
+            raw_body: string;
+            /** Format: int32 */
+            status_code: number;
         };
         RequestLog: {
             action?: null | components["schemas"]["RuleAction"];
@@ -243,6 +319,8 @@ export interface components {
             action: components["schemas"]["RuleAction"];
             /** Format: date-time */
             created_at: string;
+            /** Format: int32 */
+            delay_ms: number;
             enabled: boolean;
             /** Format: int64 */
             id: number;
@@ -252,6 +330,8 @@ export interface components {
             priority: number;
             /** Format: int64 */
             response_template_id?: number | null;
+            sequence_mode: boolean;
+            sequence_steps?: components["schemas"]["SequenceStep"][];
             /** Format: int64 */
             target_id?: number | null;
             /** Format: date-time */
@@ -278,6 +358,8 @@ export interface components {
         };
         RulePayload: {
             action: components["schemas"]["RuleAction"];
+            /** Format: int32 */
+            delay_ms?: number | null;
             enabled?: boolean | null;
             matcher: components["schemas"]["RuleMatcher"];
             note?: string | null;
@@ -285,8 +367,51 @@ export interface components {
             priority?: number | null;
             /** Format: int64 */
             response_template_id?: number | null;
+            sequence_mode?: boolean | null;
+            sequence_steps?: components["schemas"]["SequenceStepPayload"][];
             /** Format: int64 */
             target_id?: number | null;
+        };
+        RuleTestPayload: {
+            body?: string | null;
+            content_type?: string | null;
+            headers?: {
+                [key: string]: string;
+            };
+            method: string;
+            path: string;
+            query?: {
+                [key: string]: string[];
+            };
+        };
+        RuleTestResult: {
+            action?: null | components["schemas"]["RuleAction"];
+            matched: boolean;
+            /** Format: int32 */
+            priority?: number | null;
+            rendered?: null | components["schemas"]["RenderedPreview"];
+            /** Format: int64 */
+            rule_id?: number | null;
+            /** Format: int64 */
+            target_id?: number | null;
+            target_name?: string | null;
+            /** Format: int64 */
+            template_id?: number | null;
+        };
+        SequenceStep: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            rule_id: number;
+            /** Format: int32 */
+            step_index: number;
+            /** Format: int64 */
+            template_id: number;
+            template_name?: string | null;
+        };
+        SequenceStepPayload: {
+            /** Format: int64 */
+            template_id: number;
         };
         /** @enum {string} */
         SnapshotKind: "request" | "response";
@@ -347,6 +472,48 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    exportConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExportBundle"];
+                };
+            };
+        };
+    };
+    importConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExportBundle"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportSummary"];
+                };
+            };
+        };
+    };
     listLogs: {
         parameters: {
             query?: {
@@ -375,6 +542,34 @@ export interface operations {
             };
         };
     };
+    purgeLogs: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+                method?: string;
+                path?: string;
+                action?: components["schemas"]["RuleAction"];
+                status_code?: number;
+                start_time?: string;
+                end_time?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PurgeResponse"];
+                };
+            };
+        };
+    };
     getLog: {
         parameters: {
             query?: never;
@@ -393,6 +588,31 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["LogDetail"];
                 };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             404: {
                 headers: {
@@ -464,6 +684,29 @@ export interface operations {
             };
         };
     };
+    testRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleTestPayload"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleTestResult"];
+                };
+            };
+        };
+    };
     updateRule: {
         parameters: {
             query?: never;
@@ -486,6 +729,31 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["IdResponse"];
                 };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             404: {
                 headers: {
@@ -571,6 +839,37 @@ export interface operations {
             };
         };
     };
+    deleteTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     listTemplates: {
         parameters: {
             query?: {
@@ -640,6 +939,37 @@ export interface operations {
                 };
             };
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

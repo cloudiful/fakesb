@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "select id,\n       matcher,\n       target_id,\n       action,\n       response_template_id,\n       priority,\n       enabled,\n       note,\n       created_at,\n       updated_at\nfrom rules\nwhere enabled = true\norder by priority desc, id asc\n",
+  "query": "select id,\n       matcher,\n       target_id,\n       action,\n       response_template_id,\n       delay_ms,\n    sequence_mode,\n       priority,\n       enabled,\n       note,\n       created_at,\n       updated_at\nfrom rules\norder by id asc\n",
   "describe": {
     "columns": [
       {
@@ -60,6 +60,28 @@
       },
       {
         "ordinal": 5,
+        "name": "delay_ms",
+        "type_info": "Int4",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "delay_ms"
+          }
+        }
+      },
+      {
+        "ordinal": 6,
+        "name": "sequence_mode",
+        "type_info": "Bool",
+        "origin": {
+          "Table": {
+            "table": "rules",
+            "name": "sequence_mode"
+          }
+        }
+      },
+      {
+        "ordinal": 7,
         "name": "priority",
         "type_info": "Int4",
         "origin": {
@@ -70,7 +92,7 @@
         }
       },
       {
-        "ordinal": 6,
+        "ordinal": 8,
         "name": "enabled",
         "type_info": "Bool",
         "origin": {
@@ -81,7 +103,7 @@
         }
       },
       {
-        "ordinal": 7,
+        "ordinal": 9,
         "name": "note",
         "type_info": "Text",
         "origin": {
@@ -92,7 +114,7 @@
         }
       },
       {
-        "ordinal": 8,
+        "ordinal": 10,
         "name": "created_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -103,7 +125,7 @@
         }
       },
       {
-        "ordinal": 9,
+        "ordinal": 11,
         "name": "updated_at",
         "type_info": "Timestamptz",
         "origin": {
@@ -125,10 +147,12 @@
       true,
       false,
       false,
+      false,
+      false,
       true,
       false,
       false
     ]
   },
-  "hash": "89b2a140c558eb8c87c2fd8b07330d8aac3600cc613f8083ce71a5cdfe78cbaa"
+  "hash": "a9d856c1f030a49ea52d0c16165c41fca12e8accc42c95f08ff96d7049d33a3e"
 }

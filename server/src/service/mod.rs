@@ -9,9 +9,9 @@ mod response;
 #[path = "../matching.rs"]
 pub(crate) mod matching;
 
-pub(crate) use admin::{LogQuery, RuleInput};
+pub(crate) use admin::{LogQuery, RuleInput, SequenceStepInput};
 pub(crate) use dispatch::dispatch;
-pub(crate) use parser::parse_request;
+pub(crate) use parser::{from_parts, parse_request, query_string};
 
 use reqwest::Client;
 use sqlx::PgPool;
@@ -70,6 +70,8 @@ pub enum ServiceError {
     Parse(String),
     #[error("validation error: {0}")]
     Validation(String),
+    #[error("conflict: {0}")]
+    Conflict(String),
     #[error("no matching rule")]
     NoMatch,
 }

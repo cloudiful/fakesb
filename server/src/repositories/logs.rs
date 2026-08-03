@@ -247,6 +247,37 @@ pub async fn mark_error(pool: &PgPool, id: i64, error_message: &str) -> Result<(
     Ok(())
 }
 
+pub async fn delete(pool: &PgPool, id: i64) -> Result<bool, sqlx::Error> {
+    let result = sqlx::query_file!("sql/logs/delete.sql", id)
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected() == 1)
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn purge(
+    pool: &PgPool,
+    method: Option<&str>,
+    path: Option<&str>,
+    action: Option<&str>,
+    status_code: Option<i32>,
+    start_time: Option<DateTime<Utc>>,
+    end_time: Option<DateTime<Utc>>,
+) -> Result<i64, sqlx::Error> {
+    let result = sqlx::query_file!(
+        "sql/logs/purge.sql",
+        method,
+        path,
+        action,
+        status_code,
+        start_time,
+        end_time
+    )
+    .execute(pool)
+    .await?;
+    Ok(result.rows_affected() as i64)
+}
+
 fn parse_action(value: &str) -> Result<RuleAction, String> {
     match value {
         "proxy" => Ok(RuleAction::Proxy),

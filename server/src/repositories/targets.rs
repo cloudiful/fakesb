@@ -82,6 +82,34 @@ pub async fn find_enabled(pool: &PgPool, id: i64) -> Result<Option<Target>, sqlx
         .map(|row| row.map(Into::into))
 }
 
+pub async fn list_all(pool: &PgPool) -> Result<Vec<Target>, sqlx::Error> {
+    sqlx::query_file_as!(TargetRow, "sql/targets/list_all.sql")
+        .fetch_all(pool)
+        .await
+        .map(|rows| rows.into_iter().map(Into::into).collect())
+}
+
+pub async fn upsert(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
+    name: &str,
+    base_url: &str,
+    enabled: bool,
+    timeout_ms: i32,
+    note: Option<&str>,
+) -> Result<i64, sqlx::Error> {
+    Ok(sqlx::query_file!(
+        "sql/targets/upsert.sql",
+        name,
+        base_url,
+        enabled,
+        timeout_ms,
+        note
+    )
+    .fetch_one(executor)
+    .await?
+    .id)
+}
+
 pub async fn insert(
     pool: &PgPool,
     name: &str,
@@ -124,4 +152,11 @@ pub async fn update(
     .fetch_optional(pool)
     .await?
     .map(|row| row.id))
+}
+
+pub async fn delete(pool: &PgPool, id: i64) -> Result<bool, sqlx::Error> {
+    let result = sqlx::query_file!("sql/targets/delete.sql", id)
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected() == 1)
 }

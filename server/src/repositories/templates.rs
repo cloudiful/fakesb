@@ -151,3 +151,44 @@ pub async fn update(
     .await?
     .map(|row| row.id))
 }
+
+pub async fn list_all(pool: &PgPool) -> Result<Vec<ResponseTemplate>, sqlx::Error> {
+    sqlx::query_file_as!(TemplateRow, "sql/templates/list_all.sql")
+        .fetch_all(pool)
+        .await
+        .map(|rows| rows.into_iter().map(Into::into).collect())
+}
+
+pub async fn upsert(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Postgres>,
+    name: &str,
+    content_type: &str,
+    raw_template: &str,
+    format: &str,
+    status_code: u16,
+    headers: &serde_json::Value,
+    enabled: bool,
+    note: Option<&str>,
+) -> Result<i64, sqlx::Error> {
+    Ok(sqlx::query_file!(
+        "sql/templates/upsert.sql",
+        name,
+        content_type,
+        raw_template,
+        format,
+        status_code as i32,
+        headers,
+        enabled,
+        note
+    )
+    .fetch_one(executor)
+    .await?
+    .id)
+}
+
+pub async fn delete(pool: &PgPool, id: i64) -> Result<bool, sqlx::Error> {
+    let result = sqlx::query_file!("sql/templates/delete.sql", id)
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected() == 1)
+}
