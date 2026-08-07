@@ -99,7 +99,7 @@ async function remove() {
 <template>
   <UPage>
     <UPageHeader :title="t('app.targets')">
-      <template #right>
+      <template #links>
         <UButton icon="i-mdi-import" color="neutral" variant="ghost" :label="t('app.import')" @click="fileInput?.click()" />
         <UButton icon="i-mdi-export" color="neutral" variant="ghost" :label="t('app.export')" @click="exportConfig" />
         <UButton icon="i-mdi-plus" :label="t('app.create')" @click="resetForm(); open = true" />

@@ -22,7 +22,7 @@ async function remove() {
 <template>
   <UPage>
     <UPageHeader :title="`${t('app.logs')} #${id}`">
-      <template #right>
+      <template #links>
         <UButton to="/logs" icon="i-mdi-arrow-left" color="neutral" variant="ghost" />
         <UButton icon="i-mdi-delete" color="error" variant="ghost" :aria-label="t('app.delete')" @click="deleteOpen = true" />
       </template>

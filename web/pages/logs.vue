@@ -46,7 +46,7 @@ async function purge() {
 <template>
   <UPage>
     <UPageHeader :title="t('app.logs')">
-      <template #right>
+      <template #links>
         <UButton icon="i-mdi-refresh" color="neutral" variant="ghost" :aria-label="t('app.refresh')" @click="refresh()" />
         <UButton icon="i-mdi-trash-can" color="error" variant="ghost" :label="t('app.purge')" @click="purgeOpen = true" />
       </template>
